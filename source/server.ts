@@ -1,5 +1,8 @@
-const express =require('express');
-const cors =require('cors');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 
@@ -11,10 +14,6 @@ app.get('*', (_, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, (err) => {
-  if (err) {
-    console.log(`Server not alive, ${err}`);
-  } else {
-    console.log(`Server lives at ${PORT}`);
-  }
+app.listen(PORT, () => {
+  console.log(`Server lives at ${PORT}`);
 });
