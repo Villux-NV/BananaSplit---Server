@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { getUsers, getUserById, createUser } from '../models/crud';
+import {
+  getUsers,
+  getUserById,
+  createUser,
+  updateUser,
+} from '../models/crud';
 
 // Most likely won't need. Using to test endpoints/data.
 export const getUsersCtrl = async (req: Request, res: Response) => {
@@ -14,7 +19,6 @@ export const getUsersCtrl = async (req: Request, res: Response) => {
 
 export const getUserByIdCtrl = async (req: Request, res: Response) => {
   const { userId } = req.params;
-
   try {
     const user = await getUserById(userId);
     if (!user) return res.status(400).send('No User');
@@ -36,18 +40,20 @@ export const createUsersCtrl = async (req: Request, res: Response) => {
   }
 };
 
-// TODO: Update Score
-export const updateUserScoreCtrl = async (req: Request, res: Response) => {
-  const { id } = req.body;
-
+// TODO: Update Score/Longest Word -- 'score' || 'word'
+export const updateUserCtrl = async (req: Request, res: Response) => {
+  const { userId, field } = req.params;
+  const { word } = req.body;  
   try {
-    const user = await getUserById(id);
-    
+    const user = await updateUser(userId, field, word);
+    console.log(user);
+    if (!user) return res.status(400).send('No User');
+    res.status(200).json(user);
   } catch (err) {
     res.status(500).json({ error: 'Error in Update Score Ctrl', status: 500 });
   }
 };
 
-// TODO: Update Longest Word
+
 
 // TODO: Update Room -- Don't know if it will be needed

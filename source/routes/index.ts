@@ -3,7 +3,7 @@ import {
   getUsersCtrl,
   getUserByIdCtrl,
   createUsersCtrl,
-  updateUserScoreCtrl
+  updateUserCtrl,
 } from './controllers';
 
 const router = Router();
@@ -12,13 +12,12 @@ router.get('/user', getUsersCtrl);
 router.get('/user/:userId', getUserByIdCtrl);
 
 // TODO: Connect with Firebase Auth when ready - Firebase will handle email validation
-// TODO: Add guest flag to user model
 router.post('/user/create', createUsersCtrl);
 
-// TODO: Update Score
-router.put('user/score', updateUserScoreCtrl);
+// TODO: Update Score/Longest Word - :field = 'score' || 'word'
+router.post('/user/:userId/:field', updateUserCtrl);
 
-// TODO: Update Longest Word
 
+// TODO: Time permitting - Delete User, Update Username | Email
 
 export default router;
