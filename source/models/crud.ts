@@ -1,7 +1,8 @@
 import { User } from './user.model';
 import { Room } from './room.model';
 import { createServer } from "http";
-import { Server, Socket } from "socket.io";
+// import * as socketio from "socket.io";
+import app from '../server';
 
 export const getUsers = async () => {
   try {
@@ -61,27 +62,40 @@ export const updateUser = async (id: string, field: string, word: string) => {
 };
 
 export const createRoom = async (creatorName: string) => {
-  const httpServer = createServer();
-  const io = new Server(httpServer, {
-  // cors: { origin: "*" }
-  });
-  io.on('connection', async (socket: Socket) => {
+  // const httpServer = createServer();
+  // {
+  //  cors: { origin: "*" }
+  // }
+  const io = require('socket.io')(require('http').createServer());
+  console.log(io);
+  let socketRoom: any;
+
+  io.on('connection', (socket: any) => {
     socket.emit('welcome', 'Welcome to BananaSplit ');
     socket.join(socket.id);
+    console.log(socket.id, 'socketid');
     socket.emit('roomwelcome', `Welcome to room ${socket.id}, ${creatorName}!`);
-    try {
-      const room = new Room({ room_id: socket.id, host: creatorName, players: creatorName, active: true });
-      await room.save();
-      return socket;
-    }
-    catch (err) {
-      console.log(`Error Room Creation: ${err}`);
-      return { error: 'Room Creation Error'};
-    }
+    socketRoom = socket; 
   });
+
+  io.listen(3000);
+
+  try {
+    if (socketRoom) {
+      const room = new Room({ room_id: socketRoom.id, host: creatorName, players: creatorName, active: true });
+      await room.save();
+      return { room, socketRoom };
+    } else {
+      return 'no socket room';
+    }
+  }
+  catch (err) {
+    console.log(`Error Room Creation: ${err}`);
+    return { error: 'Room Creation Error'};
+  }
 };
 
-export const joinRoom = async (socket: Socket, playerId: string, playerName: string) => {
+export const joinRoom = async (socket: any, playerId: string, playerName: string) => {
   socket.emit('welcome', 'Welcome to BananaSplit ');
   socket.join(socket.id);
   socket.emit('roomwelcome', `Welcome to room ${socket.id}, ${playerName}!`);

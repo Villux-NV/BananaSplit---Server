@@ -29,3 +29,5 @@ app.get('*', (_, res) => {
     console.log('Error:', err)
   }
 })();
+
+export default app;

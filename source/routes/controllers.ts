@@ -59,12 +59,12 @@ export const updateUserCtrl = async (req: Request, res: Response) => {
 export const createRoomCtrl = async (req: Request, res: Response) => {
   const { creatorName } = req.body;
   try {
-    const room: any = await createRoom(creatorName);
+    const { room, socketRoom }: any = await createRoom(creatorName);
     console.log("Room Created");
     if (!room) return res.status(400).send('No Room');
     res.status(200).json(room);
   } catch (err) {
-    res.status(500).json({ error: 'Error in Create Room Ctrl', status: 500 });
+    res.status(500).json({ error: 'Error in Create Room Ctrl', message: err.message, status: 500 });
   }
 };
 
@@ -76,7 +76,8 @@ export const joinRoomCtrl = async (req: Request, res: Response) => {
     if (!room) return res.status(400).send('Room Error');
     res.status(200).json(room);
   } catch (err) {
-    res.status(500).json({ error: 'Error in Create Room Ctrl', status: 500 });
+    res.status(500).json({ error: 'Error in Create Room Ctrl', err, status: 500 });
   }
 }
+      
 // TODO: Update Room -- Don't know if it will be needed
