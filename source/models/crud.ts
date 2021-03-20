@@ -88,8 +88,11 @@ export const joinRoom = async (socket: Socket, playerId: string, playerName: str
   try {
     await Room.updateOne(
       { room_id: socket.id },
-     // { players:  },
-    )
+      {
+        $push: {
+          players: playerId
+        }
+      });
     return true
   }
   catch (err) {
