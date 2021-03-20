@@ -1,5 +1,7 @@
 import { User } from './user.model';
 import { Room } from './room.model';
+import { createServer } from "http";
+import { Server, Socket } from "socket.io";
 
 export const getUsers = async () => {
   try {
@@ -57,3 +59,42 @@ export const updateUser = async (id: string, field: string, word: string) => {
     return { error: 'DB Connection: Update User'};
   }
 };
+
+export const createRoom = async (creatorName: string) => {
+  const httpServer = createServer();
+  const io = new Server(httpServer, {
+  // cors: { origin: "*" }
+  });
+  io.on('connection', async (socket: Socket) => {
+    socket.emit('welcome', 'Welcome to BananaSplit ');
+    socket.join(socket.id);
+    socket.emit('roomwelcome', `Welcome to room ${socket.id}, ${creatorName}!`);
+    try {
+      const room = new Room({ room_id: socket.id, host: creatorName, players: creatorName, active: true });
+      await room.save();
+      return socket;
+    }
+    catch (err) {
+      console.log(`Error Room Creation: ${err}`);
+      return { error: 'Room Creation Error'};
+    }
+  });
+};
+
+export const joinRoom = async (socket: Socket, playerId: string, playerName: string) => {
+  socket.emit('welcome', 'Welcome to BananaSplit ');
+  socket.join(socket.id);
+  socket.emit('roomwelcome', `Welcome to room ${socket.id}, ${playerName}!`);
+  try {
+    await Room.updateOne(
+      { room_id: socket.id },
+     // { players:  },
+    )
+    return true
+  }
+  catch (err) {
+    console.log(`Error Player Join: ${err}`);
+    return { error: 'Player Join Error'};
+  }
+};
+

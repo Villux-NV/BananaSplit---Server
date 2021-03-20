@@ -4,6 +4,8 @@ import {
   getUserByIdCtrl,
   createUsersCtrl,
   updateUserCtrl,
+  createRoomCtrl,
+  joinRoomCtrl
 } from './controllers';
 
 const router = Router();
@@ -17,7 +19,9 @@ router.post('/user/create', createUsersCtrl);
 // TODO: Update Score/Longest Word - :field = 'score' || 'word'
 router.post('/user/:userId/:field', updateUserCtrl);
 
+router.post('/room/:roomId/create', createRoomCtrl);
 
+router.post('/room/:roomId/join', joinRoomCtrl);
 // TODO: Time permitting - Delete User, Update Username | Email
 
 export default router;

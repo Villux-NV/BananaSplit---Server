@@ -4,6 +4,8 @@ import {
   getUserById,
   createUser,
   updateUser,
+  createRoom,
+  joinRoom
 } from '../models/crud';
 
 // Most likely won't need. Using to test endpoints/data.
@@ -54,6 +56,27 @@ export const updateUserCtrl = async (req: Request, res: Response) => {
   }
 };
 
+export const createRoomCtrl = async (req: Request, res: Response) => {
+  const { creatorName } = req.body;
+  try {
+    const room: any = await createRoom(creatorName);
+    console.log("Room Created");
+    if (!room) return res.status(400).send('No Room');
+    res.status(200).json(room);
+  } catch (err) {
+    res.status(500).json({ error: 'Error in Create Room Ctrl', status: 500 });
+  }
+};
 
-
+export const joinRoomCtrl = async (req: Request, res: Response) => {
+  const { socket, playerId, PlayerName } = req.body;
+  try {
+    const room: any = await joinRoom(socket, playerId, PlayerName);
+    console.log("Player Joined");
+    if (!room) return res.status(400).send('Room Error');
+    res.status(200).json(room);
+  } catch (err) {
+    res.status(500).json({ error: 'Error in Create Room Ctrl', status: 500 });
+  }
+}
 // TODO: Update Room -- Don't know if it will be needed
