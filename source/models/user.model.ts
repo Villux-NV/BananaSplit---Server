@@ -11,15 +11,20 @@ const userSchema = new Schema({
   },
   room_id: {
     type: String,
-    required: true
+    required: false
   },
   score: {
     type: Number,
-    required: true
+    default: 0,
+    required: false,
   },
   longest_word: {
     type: String,
     required: false
+  },
+  guest: {
+    type: Boolean,
+    required: false,
   }
 });
 

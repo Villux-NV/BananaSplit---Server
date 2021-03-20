@@ -21,10 +21,12 @@ export const getUserById = async (id: string) => {
   }
 };
 
+// NOTE: Added guest flag in case we need for rooms
 export const createUser = async (userName: string, email: string) => {
   try {
-    const user = new User({ userName, email });
+    const user = new User({ userName, email, guest: false });
     await user.save();
+    console.log(user);
     return user;
   } catch (err) {
     console.log(`Error Get Users: ${err}`);
