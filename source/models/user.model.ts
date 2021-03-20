@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 
 const userSchema = new Schema({
-  username: {
+  userName: {
     type: String,
     required: true
   },
@@ -23,4 +23,4 @@ const userSchema = new Schema({
   }
 });
 
-module.exports = model('User', userSchema);
+export const User = model('User', userSchema);
