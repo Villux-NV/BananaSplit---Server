@@ -1,6 +1,7 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Model } from 'mongoose';
+import { UserDocument } from '../lib/interfaces';
 
-const userSchema = new Schema({
+const userSchema: Schema = new Schema({
   userName: {
     type: String,
     required: true
@@ -28,4 +29,4 @@ const userSchema = new Schema({
   }
 });
 
-export const User = model('User', userSchema);
+export const User: Model<UserDocument> = model('User', userSchema);

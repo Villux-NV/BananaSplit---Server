@@ -37,11 +37,6 @@ app.get('*', (_, res) => {
     app.listen(PORT, () => {
       console.log(`Express Server lives at ${PORT}`);
     });
-
-    io.listen(4300)
-    // , () => {
-    //   console.log(`Socket Server lives at 4300`);
-    // });
   } catch (err) {
     console.log('Error:', err)
   }
