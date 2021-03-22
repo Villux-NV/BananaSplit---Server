@@ -27,9 +27,9 @@ export const getUserById = async (id: string) => {
 
 // NOTE: Added guest flag in case we need for rooms
 // NOTE: Can add logic -- if guest, then kickback so username on front end/not saved
-export const createUser = async (userName: string, email: string) => {
+export const createUser = async (email: string, userName: string, uid: string) => {
   try {
-    const user = new User({ userName, email, guest: false });
+    const user = new User({ _id: uid, userName, email, guest: false });
     await user.save();
     return user;
   } catch (err) {

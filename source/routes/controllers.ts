@@ -32,10 +32,10 @@ export const getUserByIdCtrl = async (req: Request, res: Response) => {
 };
 
 export const createUsersCtrl = async (req: Request, res: Response) => {
-  const { userName, email } = req.body;
+  const { email, userName, uid } = req.body;
 
   try {
-    const user = await createUser(userName, email);
+    const user = await createUser(email, userName, uid);
     if (!user) return res.status(400).send('Error Creating User');
     res.status(200).json(user);
   } catch (err) {
