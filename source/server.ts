@@ -7,6 +7,7 @@ import dbConnection from './models';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
 import { getGameRoomCode } from './lib/utils';
+import { RoomInformation } from './lib/interfaces';
 
 dotenv.config();
 
@@ -24,58 +25,64 @@ app.use(cors());
 app.use(express.json());
 app.use('/', router);
 
-// NOTE: Placing room state here, will need to extract to outside folder
-const state = {};
-const gameRooms: any = {};
-let clientCounter = 0;
+// NOTE: Global State currently -> Will change once proven
+// individualRoom -> { gameRoomCode: { players: [...players] } }
+// allRooms -> { socket.id: gameRoomCode } 
+const individualRoom: any = {};
+const allRooms: any = {};
 
 io.on('connection', (socket: Socket) => {
-  // NOTE: Sends to client/single user
+  // NOTE: Socket.emit -> Sends to client/single user
+  // Socket.broadcast.emit -> Everyone but user
+  // io.emit -> Everyone
   socket.emit('init', 'Welcome to Banana/Split');
-  // NOTE: Sends to everyone but user
   socket.broadcast.emit('init', `Player has joined`);
-  // NOTE: Sends to everyone
   socket.on('disconnect', () => {
-    // NOTE: Send to everyone
     io.emit('init', 'Player has left');
   });
 
-  // TODO: Create game rooms and connect to front end
-  const handlePrivateGame = (code: string) => {
-    console.log('creating private game with: ', code);
-    gameRooms[socket.id] = code;
-    socket.emit('gameRoomCode', code);
-
-    socket.join(code);
-    console.log(gameRooms, 'Rooms Made');
+  const handleGetPlayer = (code: string) => {
+    const currentRoom = individualRoom[code];
+    const playersInRoom = currentRoom?.players;
+    socket.emit('playersInRoom', playersInRoom);
   };
 
-  const handleJoinGame = (code: string) => {
-    const room: any = io.sockets.adapter.rooms.get(code);
+  // NOTE: Handles creating of private game room
+  const handlePrivateGame = ({ gameRoomCode, userName, userID }: RoomInformation) => {
+    console.log('Private Game Creation', gameRoomCode, userName, userID);
 
-    let allPlayers;
-    if (room) {
-      allPlayers = room.sockets;
-    }
+    // TODO: Need logic to check if player has a previous game
+    // TODO: Rejoin if possible, or start new game
+    allRooms[socket.id] = gameRoomCode;
+    socket.emit('gameRoomCreated', true);
+    
+    individualRoom[gameRoomCode] = {
+      players: [userName]
+    };
+    
+    const currentRoom = individualRoom[gameRoomCode];
+    const currentPlayer = currentRoom.players[0];
+    console.log(currentPlayer, 'server current player');
 
-    let numberClients = 0;
-    if (allPlayers) {
-      numberClients = Object.keys(allPlayers).length;
-    }
-
-    if (numberClients === 0) {
-      socket.emit('unknownGame');
-      return
-    } else if (numberClients > 7) {
-      socket.emit('tooManyPlayers');
-      return
-    } 
-
-    gameRooms[socket.id] = code;
-    socket.join(code);
-
+    socket.emit('gameRoomCreator', currentPlayer);
+    socket.join(gameRoomCode);
+    console.log(individualRoom, 'room state?');
   };
 
+  const handleJoinGame = ({ gameRoomCode, userName, userID }: RoomInformation) => {
+    // TODO: Check if room has space/available
+    // TODO: If room has 0 players, then unknownGame
+    // TODO: Join if all prev passed
+
+    const currentRoom = individualRoom[gameRoomCode];
+    currentRoom.players.push(userName);
+
+    socket.emit('playerJoin', { gameRoomCode, currentRoom });
+    socket.join(gameRoomCode);
+    console.log(individualRoom, 'joining player');
+  };
+
+  socket.on('getPlayersInRoom', handleGetPlayer);
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
 });
