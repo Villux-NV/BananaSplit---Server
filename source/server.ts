@@ -53,6 +53,7 @@ io.on('connection', (socket: Socket) => {
 
     // TODO: Need logic to check if player has a previous game
     // TODO: Rejoin if possible, or start new game
+    // TODO: Add Disconnect logic
     allRooms[socket.id] = gameRoomCode;
     socket.emit('gameRoomCreated', true);
     
