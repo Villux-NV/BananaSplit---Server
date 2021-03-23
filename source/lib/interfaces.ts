@@ -8,3 +8,9 @@ export interface UserDocument extends Document {
   longest_word?: string,
   guest?: boolean,
 }
+
+export interface RoomInformation {
+  gameRoomCode: string,
+  userName: string,
+  userID: string
+}
