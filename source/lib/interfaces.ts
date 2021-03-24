@@ -13,5 +13,4 @@ export interface RoomInformation {
   gameRoomCode: string,
   id: string,
   userName: string,
-  userID: string
 }
