@@ -41,12 +41,11 @@ io.on('connection', (socket: Socket) => {
   socket.emit('message', 'Welcome to Banana/Split');
   socket.broadcast.emit('message', `Player has joined`);
 
-  // TODO: Disconnect happens when tab/window is closed
+  // TODO: Disconnect player when tab/window is closed
   socket.on('disconnect', (reason) => {
     console.log(reason);
     socket.leave(ROOM_ID);
-    console.log(individualRoom, 'after disconnect');
-    console.log(ROOM_ID, 'after disconnect');
+    handleLeaveGame(ROOM_ID);
   });
 
   const handleGetPlayer = (code: string) => {
