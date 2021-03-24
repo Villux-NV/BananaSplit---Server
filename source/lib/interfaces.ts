@@ -11,6 +11,7 @@ export interface UserDocument extends Document {
 
 export interface RoomInformation {
   gameRoomCode: string,
+  id: string,
   userName: string,
   userID: string
 }
