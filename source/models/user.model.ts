@@ -1,7 +1,12 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Model } from 'mongoose';
+import { UserDocument } from '../lib/interfaces';
 
-const userSchema = new Schema({
-  username: {
+const userSchema: Schema = new Schema({
+  _id: {
+    type: String,
+    required: true
+  },
+  userName: {
     type: String,
     required: true
   },
@@ -11,16 +16,21 @@ const userSchema = new Schema({
   },
   room_id: {
     type: String,
-    required: true
+    required: false
   },
   score: {
     type: Number,
-    required: true
+    default: 0,
+    required: false,
   },
   longest_word: {
     type: String,
     required: false
+  },
+  guest: {
+    type: Boolean,
+    required: false,
   }
 });
 
-module.exports = model('User', userSchema);
+export const User: Model<UserDocument> = model('User', userSchema);
