@@ -125,9 +125,10 @@ io.on('connection', (socket: Socket) => {
       // const array = [];
       // current issue with Tile creation
       for(let i = 0; i <= Object.keys(bunchAgain).length; i++) {
-        try {
+        for (let j=0; j<bunchAgain[i].length; j++) {
+          try {
           const tile = new Tile({ 
-             tile_id: bunchAgain[i].id, letter: bunchAgain[i].tile
+             tile_id: bunchAgain[i][j].id, letter: bunchAgain[i][j].tile
           });
           tile.save();
         } catch (err) {
@@ -135,7 +136,8 @@ io.on('connection', (socket: Socket) => {
           return { error: 'Storing Error' };
         }
       }
-      return bunchAgain;
+    }
+    return bunchAgain;
     };
     try {
       const check = await store(storeBunch); 
@@ -145,6 +147,18 @@ io.on('connection', (socket: Socket) => {
       console.log(err);
     } 
   };
+  const storeOneTile = async (tile: any) => {
+    try {
+      const tileToStore = new Tile({ 
+        tile_id: tile.id, letter: tile.tile
+      });
+      tile.save();
+      return true;
+    } catch (err) {
+      console.log(`Error in Stroring single tile: ${err}`);
+      return { error: 'Storing Single Tile Error' };
+    }
+  }
   const getOneTile = async () => {
     const tile  = await Tile.findOneAndRemove({ tile_id: Math.floor(Math.random()*Tile.length) }, {}, (tile) => {
       return tile;
@@ -159,7 +173,11 @@ io.on('connection', (socket: Socket) => {
     socket.emit('stored', storeTilesCtrl(bunch));
   });
   socket.on('getOneTile', function () {
-    socket.emit('returnOneTile', getOneTile);
+    socket.emit('returnOneTile', getOneTile());
+  });
+  socket.on('storeOneTile', function (tile) {
+    const tileToStore = tile;
+    socket.emit('tileStored', storeOneTile(tileToStore));
   });
 });
 app.get('*', (_, res) => {
