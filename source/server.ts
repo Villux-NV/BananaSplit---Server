@@ -12,6 +12,42 @@ import { Tile } from './models/tile.model';
 
 dotenv.config();
 
+const mockBunch = [
+  ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
+  ['B', 'B', 'B'],
+  ['C', 'C', 'C'],
+  ['D', 'D', 'D', 'D', 'D', 'D'],
+  ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'],
+  ['F', 'F', 'F'],
+  ['G', 'G', 'G', 'G'],
+  ['H', 'H', 'H'],
+  ['I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I'],
+  ['J', 'J'],
+  ['K', 'K'],
+  ['L', 'L', 'L', 'L', 'L'],
+  ['M', 'M', 'M'],
+  ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+  ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+  ['P', 'P', 'P'],
+  ['Q', 'Q'],
+  ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'],
+  ['S', 'S', 'S', 'S', 'S', 'S'],
+  ['T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T'],
+  ['U', 'U', 'U', 'U', 'U', 'U'],
+  ['V', 'V', 'V'],
+  ['W', 'W', 'W'],
+  ['X', 'X'],
+  ['Y', 'Y', 'Y'],
+  ['Z', 'Z'],
+];
+
+let bunch: any[] = [];
+for(let i=0; i<mockBunch.length;i++) {
+  for (let j=0; j<mockBunch[i].length; j++) {
+    bunch.push({ tile: mockBunch[i][j], id: Object.keys(bunch).length });
+  }
+}
+
 const app = express();
 const socketServer = new http.Server(app);
 
@@ -84,41 +120,51 @@ io.on('connection', (socket: Socket) => {
     console.log(individualRoom, 'joining player');
   };
   
-  const storeTilesCtrl = async (bunch: any) => {
-    const store = async (bunch: any) => {
+  const storeTilesCtrl = async (storeBunch: any) => {
+    const store = async (bunchAgain: any) => {
       // const array = [];
-      for(let i = 0; i <= Object.keys(bunch).length; i++) {
+      // current issue with Tile creation
+      for(let i = 0; i <= Object.keys(bunchAgain).length; i++) {
         try {
           const tile = new Tile({ 
-             tile_id: bunch.id, letter: bunch.tile
+             tile_id: bunchAgain[i].id, letter: bunchAgain[i].tile
           });
           tile.save();
         } catch (err) {
           console.log(`Error in Stroring: ${err}`);
           return { error: 'Storing Error' };
         }
-      };
-      return true;
-    } 
+      }
+      return bunchAgain;
+    };
     try {
-      const check = await store(bunch); 
+      const check = await store(storeBunch); 
       if(check) console.log('stored');
       return true;
     } catch (err) {
       console.log(err);
-    }
-  }
+    } 
+  };
+  const getOneTile = async () => {
+    const tile  = await Tile.findOneAndRemove({ tile_id: Math.floor(Math.random()*Tile.length) }, {}, (tile) => {
+      return tile;
+    });
+    return tile;
+  };
   socket.on('getPlayersInRoom', handleGetPlayer);
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
-
-  socket.on('getOneTile', storeTilesCtrl ).emit('returnOneTile');
+  
+  socket.on('store', function (bunch) {
+    socket.emit('stored', storeTilesCtrl(bunch));
+  });
+  socket.on('getOneTile', function () {
+    socket.emit('returnOneTile', getOneTile);
+  });
 });
-
 app.get('*', (_, res) => {
   res.status(400).send('Sorry, no page found :`(');
 });
-
 const PORT = process.env.PORT || 4200;
 (async () => {
   try {

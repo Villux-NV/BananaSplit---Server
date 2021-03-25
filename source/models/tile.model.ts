@@ -1,12 +1,10 @@
 import { Schema, model, Model } from 'mongoose';
 const tileSchema: Schema = new Schema({
     tile_id: {
-      type: Number,
-      required: true
+      type: Number
     },
     letter: {
-      type: String,
-      required: true
+      type: String
     }
   });
   

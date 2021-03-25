@@ -5,7 +5,6 @@ import {
   getUserById,
   createUser,
   updateUser,
-  store
   // createRoom,
   // joinRoom
 } from '../models/crud';
@@ -56,16 +55,6 @@ export const updateUserCtrl = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Error in Update Score Ctrl', status: 500 });
   }
 };
-
-export const storeTilesCtrl = async (bunch: Object) => {
-  try {
-    const check = await store(bunch); 
-    if(check) console.log('stored');
-    return true;
-  } catch (err) {
-    console.log(err);
-  }
-}
 
 // export const createRoomCtrl = async (req: Request, res: Response) => {
 //   const { creatorName } = req.body;
