@@ -1,16 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+dotenv.config();
+
 import router from './routes';
 import dbConnection from './models';
-
 import http from 'http';
 import { Server, Socket } from 'socket.io';
-import { getGameRoomCode } from './lib/utils';
+// import { getOneTile, storeTilesCtrl } from './lib/utils';
 import { RoomInformation } from './lib/interfaces';
-import { Tile } from './models/tile.model';
 
-dotenv.config();
 
 const mockBunch = [
   ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
@@ -87,8 +86,12 @@ io.on('connection', (socket: Socket) => {
 
   // Disconnects player when tab/window is closed
   socket.on('disconnect', (reason) => {
-    socket.leave(ROOM_ID);
-    handleLeaveGame(ROOM_ID);
+    try {
+      socket.leave(ROOM_ID);
+      handleLeaveGame(ROOM_ID);
+    } catch (err) {
+      console.error(err);
+    }
   });
 
   // For front end to update players in room
@@ -98,18 +101,45 @@ io.on('connection', (socket: Socket) => {
     socket.emit('playersInRoom', playersInRoom);
   };
 
+  // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
+  const handlePlayerReady = (gameRoomCode: string) => {
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const currentPlayer = currentRoom[socket.id].userName;
+    const currentReady = currentRoom.playersReady;
+    currentReady.push(currentPlayer);
+    console.log(currentRoom);
+  };
+
+  const handleRoomReady = (gameRoomCode: string) => {
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const currentPlayers = currentRoom?.players;
+    const currentReady = currentRoom?.playersReady;
+
+    if (currentPlayers || currentReady) {
+      if (currentPlayers.length === 1 || currentPlayers.length > currentReady.length) {
+        socket.emit('isRoomReady', false);
+      } else if (currentPlayers.length === currentReady.length) {
+        socket.emit('isRoomReady', true);
+      };
+    };
+  };
+
   // Create Private Game
   const handlePrivateGame = ({ gameRoomCode, userName }: RoomInformation) => {
     ROOM_ID = gameRoomCode;
+    ROOM_USER = userName;
     // TODO: Rejoin if possible, or start new game
     allRooms[socket.id] = gameRoomCode;
     socket.emit('gameRoomCreated', true);
 
     socketRoomInformation[gameRoomCode] = {
       players: [userName],
+      playersReady: [],
+      host: [userName],
+      // NOTE: May not be needed anymore
       [socket.id]: { 
         userName,
-        isReady: false,
+        host: true,
       }
     };
     
@@ -133,18 +163,17 @@ io.on('connection', (socket: Socket) => {
     if (currentRoom) {
       if (Object.keys(currentRoom).length === 0 || !currentRoom) {
         console.log('No Room');
-        socket.emit('joinGameResponse', { res: 'No Room', userName });
+        socket.emit('joinGameResponse', { res: 'No Room' });
       } else if (Object.keys(currentRoom).length >= ROOM_SIZE) {
         console.log('Room Full');
-        socket.emit('joinGameResponse', { res: 'Room Full', userName });
+        socket.emit('joinGameResponse', { res: 'Room Full' });
       } else {
-        socket.emit('joinGameResponse', { res: 'Joining', userName });
+        socket.emit('joinGameResponse', { res: 'Joining' });
         currentPlayers.push(userName);
         socketRoomInformation[gameRoomCode] = {
           ...socketRoomInformation[gameRoomCode],
           [socket.id]: { 
             userName,
-            isReady: false,
           }
         };
         socket.join(gameRoomCode);
@@ -157,61 +186,33 @@ io.on('connection', (socket: Socket) => {
   const handleLeaveGame = (gameRoomCode: string) => {
     socket.leave(gameRoomCode);
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const playersInRoom = currentRoom.players;
+    const playersInRoom = currentRoom?.players;
     const index = playersInRoom?.indexOf(ROOM_USER);
-    delete currentRoom[socket.id];
+    
+    if (currentRoom) {
+      delete currentRoom[socket.id];
+    };
 
     if (index >= 0) {
       playersInRoom.splice(index, 1);
     } else {
       console.log('No player');
-    }
-  };
-
-  const storeTilesCtrl = async (storeBunch: any) => {
-    const store = async (bunchAgain: any) => {
-      // const array = [];
-      // current issue with Tile creation
-      for(let i = 0; i <= Object.keys(bunchAgain).length; i++) {
-        try {
-          const tile = new Tile({ 
-             tile_id: bunchAgain[i].id, letter: bunchAgain[i].tile
-          });
-          tile.save();
-        } catch (err) {
-          console.log(`Error in Stroring: ${err}`);
-          return { error: 'Storing Error' };
-        }
-      }
-      return bunchAgain;
     };
-    try {
-      const check = await store(storeBunch); 
-      if(check) console.log('stored');
-      return true;
-    } catch (err) {
-      console.log(err);
-    } 
-  };
-
-  const getOneTile = async () => {
-    const tile  = await Tile.findOneAndRemove({ tile_id: Math.floor(Math.random()*Tile.length) }, {}, (tile) => {
-      return tile;
-    });
-    return tile;
   };
 
   socket.on('getPlayersInRoom', handleGetPlayers);
+  socket.on('playerReady', handlePlayerReady);
+  socket.on('roomReady', handleRoomReady);
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
   socket.on('leaveGame', handleLeaveGame);
 
-  socket.on('store', function (bunch) {
-    socket.emit('stored', storeTilesCtrl(bunch));
-  });
-  socket.on('getOneTile', function () {
-    socket.emit('returnOneTile', getOneTile);
-  });
+  // socket.on('store', function () {
+  //   socket.emit('stored', storeTilesCtrl(bunch));
+  // });
+  // socket.on('getOneTile', function () {
+  //   socket.emit('returnOneTile', getOneTile);
+  // });
 });
 
 app.get('*', (_, res) => {

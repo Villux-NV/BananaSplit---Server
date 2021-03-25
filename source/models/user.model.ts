@@ -14,10 +14,6 @@ const userSchema: Schema = new Schema({
     type: String,
     required: true
   },
-  room_id: {
-    type: String,
-    required: false
-  },
   score: {
     type: Number,
     default: 0,
@@ -27,10 +23,6 @@ const userSchema: Schema = new Schema({
     type: String,
     required: false
   },
-  guest: {
-    type: Boolean,
-    required: false,
-  }
 });
 
 export const User: Model<UserDocument> = model('User', userSchema);

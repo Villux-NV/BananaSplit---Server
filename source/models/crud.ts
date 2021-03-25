@@ -1,9 +1,4 @@
 import { User } from './user.model';
-import { Room } from './room.model';
-import { createServer } from "http";
-import { Tile } from './tile.model';
-import app from '../server';
-import { UserDocument } from '../lib/interfaces';
 
 export const getUsers = async () => {
   try {
@@ -25,11 +20,9 @@ export const getUserById = async (id: string) => {
   }
 };
 
-// NOTE: Added guest flag in case we need for rooms
-// NOTE: Can add logic -- if guest, then kickback so username on front end/not saved
 export const createUser = async (email: string, userName: string, uid: string) => {
   try {
-    const user = new User({ _id: uid, userName, email, guest: false });
+    const user = new User({ _id: uid, userName, email });
     await user.save();
     return user;
   } catch (err) {
@@ -38,6 +31,7 @@ export const createUser = async (email: string, userName: string, uid: string) =
   }
 };
 
+// TODO: Refactor to separate actions for Score and Word
 export const updateUser = async (field: string, id: string, word: string) => {
   try {
     if (field === 'score') {
