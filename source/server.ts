@@ -95,10 +95,10 @@ io.on('connection', (socket: Socket) => {
   });
 
   // For front end to update players in room
-  const handleGetPlayers = (code: string) => {
+  const handleGetPlayers = (code: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[code];
     const playersInRoom = currentRoom?.players;
-    socket.emit('playersInRoom', playersInRoom);
+    socketResponse(playersInRoom);
   };
 
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
@@ -110,50 +110,50 @@ io.on('connection', (socket: Socket) => {
     console.log(currentRoom);
   };
 
-  const handleRoomReady = (gameRoomCode: string) => {
+  const handleRoomReady = (gameRoomCode: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
     const currentPlayers = currentRoom?.players;
     const currentReady = currentRoom?.playersReady;
 
     if (currentPlayers || currentReady) {
       if (currentPlayers.length === 1 || currentPlayers.length > currentReady.length) {
-        socket.emit('isRoomReady', false);
+        socketResponse(false);
       } else if (currentPlayers.length === currentReady.length) {
-        socket.emit('isRoomReady', true);
+        socketResponse(true);
       };
     };
   };
 
+  const handleHost = (gameRoomCode: string, socketResponse: Function) => {
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const currentPlayer = currentRoom[socket.id];
+    const isHost = currentPlayer.host;
+    socketResponse(isHost);
+  };
+
   // Create Private Game
-  const handlePrivateGame = ({ gameRoomCode, userName }: RoomInformation) => {
+  const handlePrivateGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
     ROOM_ID = gameRoomCode;
     ROOM_USER = userName;
     // TODO: Rejoin if possible, or start new game
     allRooms[socket.id] = gameRoomCode;
-    socket.emit('gameRoomCreated', true);
+    socketResponse(true);
 
     socketRoomInformation[gameRoomCode] = {
       players: [userName],
       playersReady: [],
-      host: [userName],
-      // NOTE: May not be needed anymore
       [socket.id]: { 
         userName,
         host: true,
       }
     };
     
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentSocket = currentRoom[socket.id];
-    const currentPlayer = currentSocket.userName;
-
-    socket.emit('gameRoomCreator', currentPlayer);
     socket.join(gameRoomCode);
     console.log('Socket Rooms', socketRoomInformation);
   };
 
   // Join Private Game (Currently)
-  const handleJoinGame = ({ gameRoomCode, userName }: RoomInformation) => {
+  const handleJoinGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
     ROOM_ID = gameRoomCode;
     ROOM_USER = userName;
 
@@ -162,13 +162,10 @@ io.on('connection', (socket: Socket) => {
 
     if (currentRoom) {
       if (Object.keys(currentRoom).length === 0 || !currentRoom) {
-        console.log('No Room');
-        socket.emit('joinGameResponse', { res: 'No Room' });
+        socketResponse('No Room');
       } else if (Object.keys(currentRoom).length >= ROOM_SIZE) {
-        console.log('Room Full');
-        socket.emit('joinGameResponse', { res: 'Room Full' });
+        socketResponse('Room Full');
       } else {
-        socket.emit('joinGameResponse', { res: 'Joining' });
         currentPlayers.push(userName);
         socketRoomInformation[gameRoomCode] = {
           ...socketRoomInformation[gameRoomCode],
@@ -178,6 +175,7 @@ io.on('connection', (socket: Socket) => {
         };
         socket.join(gameRoomCode);
         console.log('Socket Rooms', socketRoomInformation);
+        socketResponse('Joining');
       }
     }
   };
@@ -199,6 +197,8 @@ io.on('connection', (socket: Socket) => {
       console.log('No player');
     };
   };
+
+  socket.on('hostSearch', handleHost);
 
   socket.on('getPlayersInRoom', handleGetPlayers);
   socket.on('playerReady', handlePlayerReady);
