@@ -12,40 +12,11 @@ import { RoomInformation } from './lib/interfaces';
 import { Tile } from './models/tile.model';
 
 
-const mockBunch = [
-  ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
-  ['B', 'B', 'B'],
-  ['C', 'C', 'C'],
-  ['D', 'D', 'D', 'D', 'D', 'D'],
-  ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'],
-  ['F', 'F', 'F'],
-  ['G', 'G', 'G', 'G'],
-  ['H', 'H', 'H'],
-  ['I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I'],
-  ['J', 'J'],
-  ['K', 'K'],
-  ['L', 'L', 'L', 'L', 'L'],
-  ['M', 'M', 'M'],
-  ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
-  ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
-  ['P', 'P', 'P'],
-  ['Q', 'Q'],
-  ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'],
-  ['S', 'S', 'S', 'S', 'S', 'S'],
-  ['T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T'],
-  ['U', 'U', 'U', 'U', 'U', 'U'],
-  ['V', 'V', 'V'],
-  ['W', 'W', 'W'],
-  ['X', 'X'],
-  ['Y', 'Y', 'Y'],
-  ['Z', 'Z'],
-];
+const tileSet = ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'B', 'B', 'B', 'C', 'C', 'C', 'D', 'D', 'D', 'D', 'D', 'D', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'F', 'F', 'F', 'G', 'G', 'G', 'G', 'H', 'H', 'H', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'J', 'J', 'K', 'K', 'L', 'L', 'L', 'L', 'L', 'M', 'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'P', 'P', 'P', 'Q', 'Q', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'S', 'S', 'S', 'S', 'S', 'S', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'U', 'U', 'U', 'U', 'U', 'U', 'V', 'V', 'V', 'W', 'W', 'W','X', 'X', 'Y', 'Y', 'Y', 'Z', 'Z'];
 
 let bunch: any[] = [];
-for (let i = 0; i < mockBunch.length; i++) {
-  for (let j = 0; j < mockBunch[i].length; j++) {
-    bunch.push({ tile: mockBunch[i][j], id: Object.keys(bunch).length });
-  }
+for (let i = 0; i < tileSet.length; i++) {
+    bunch.push({ tile: tileSet[i], id: Object.keys(bunch).length });
 };
 
 const app = express();
@@ -104,7 +75,7 @@ io.on('connection', (socket: Socket) => {
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
   const handlePlayerReady = (gameRoomCode: string) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayer = currentRoom[socket.id].userName;
+    const currentPlayer = currentRoom[socket.id]?.userName;
     const currentReady = currentRoom.playersReady;
     currentReady.push(currentPlayer);
     console.log(currentRoom);
@@ -170,6 +141,7 @@ io.on('connection', (socket: Socket) => {
           ...socketRoomInformation[gameRoomCode],
           [socket.id]: { 
             userName,
+            host: false
           }
         };
         socket.join(gameRoomCode);
@@ -181,6 +153,7 @@ io.on('connection', (socket: Socket) => {
 
   const handleStartGame = () => {
     io.emit('startGame');
+    console.log(bunch);
   };
 
   // Leave Game - removes player from room and individual room
@@ -206,7 +179,7 @@ io.on('connection', (socket: Socket) => {
       // const array = [];
       // current issue with Tile creation
       for(let i = 0; i <= Object.keys(bunchAgain).length; i++) {
-        for (let j=0; j<bunchAgain[i].length; j++) {
+        for (let j=0; j<bunchAgain[i]?.length; j++) {
           try {
             const tile = new Tile({ 
               tile_id: bunchAgain[i][j].id, letter: bunchAgain[i][j].tile
@@ -220,7 +193,7 @@ io.on('connection', (socket: Socket) => {
       }
       return bunchAgain;
     };
-    
+
     try {
       const check = await store(storeBunch); 
       if(check) console.log('stored');
@@ -250,6 +223,10 @@ io.on('connection', (socket: Socket) => {
     return tile;
   };
 
+  const createBunch = (tileSet: any) => {
+
+  };
+
   socket.on('hostSearch', handleHost);
   socket.on('getPlayersInRoom', handleGetPlayers);
   socket.on('playerReady', handlePlayerReady);
@@ -259,8 +236,8 @@ io.on('connection', (socket: Socket) => {
   socket.on('startGame', handleStartGame);
   socket.on('leaveGame', handleLeaveGame);
 
-  socket.on('store', function (bunch) {
-    socket.emit('stored', storeTilesCtrl(bunch));
+  socket.on('createBunch', () => {
+    storeTilesCtrl(bunch);
   });
 
   socket.on('getOneTile', function () {
