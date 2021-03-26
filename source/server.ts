@@ -10,14 +10,8 @@ import { Server, Socket } from 'socket.io';
 // import { getOneTile, storeTilesCtrl } from './lib/utils';
 import { RoomInformation } from './lib/interfaces';
 import { Tile } from './models/tile.model';
-
-
-const tileSet = ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'B', 'B', 'B', 'C', 'C', 'C', 'D', 'D', 'D', 'D', 'D', 'D', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'F', 'F', 'F', 'G', 'G', 'G', 'G', 'H', 'H', 'H', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'J', 'J', 'K', 'K', 'L', 'L', 'L', 'L', 'L', 'M', 'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'P', 'P', 'P', 'Q', 'Q', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'S', 'S', 'S', 'S', 'S', 'S', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'U', 'U', 'U', 'U', 'U', 'U', 'V', 'V', 'V', 'W', 'W', 'W','X', 'X', 'Y', 'Y', 'Y', 'Z', 'Z'];
-
-let bunch: any[] = [];
-for (let i = 0; i < tileSet.length; i++) {
-    bunch.push({ tile: tileSet[i], id: Object.keys(bunch).length });
-};
+import { buildBunch, shuffleBunch } from './lib/utils';
+import { tileSet } from './lib/tileset';
 
 const app = express();
 const socketServer = new http.Server(app);
@@ -50,10 +44,6 @@ io.on('connection', (socket: Socket) => {
   let ROOM_ID: string;
   let ROOM_USER: string;
   const ROOM_SIZE: number = 8;
-  // NOTE: Socket.emit -> Sends to client/single user
-  // socket.broadcast.emit -> Everyone but user
-  // socket.emit('message', 'Welcome to Banana/Split');
-  // socket.broadcast.emit('message', `Player has joined`);
 
   // Disconnects player when tab/window is closed
   socket.on('disconnect', (reason) => {
@@ -151,11 +141,6 @@ io.on('connection', (socket: Socket) => {
     }
   };
 
-  const handleStartGame = () => {
-    io.emit('startGame');
-    console.log(bunch);
-  };
-
   // Leave Game - removes player from room and individual room
   const handleLeaveGame = (gameRoomCode: string) => {
     socket.leave(gameRoomCode);
@@ -173,58 +158,9 @@ io.on('connection', (socket: Socket) => {
       console.log('No player');
     };
   };
-  
-  const storeTilesCtrl = async (storeBunch: any) => {
-    const store = async (bunchAgain: any) => {
-      // const array = [];
-      // current issue with Tile creation
-      for(let i = 0; i <= Object.keys(bunchAgain).length; i++) {
-        for (let j=0; j<bunchAgain[i]?.length; j++) {
-          try {
-            const tile = new Tile({ 
-              tile_id: bunchAgain[i][j].id, letter: bunchAgain[i][j].tile
-            });
-            tile.save();
-          } catch (err) {
-            console.log(`Error in Stroring: ${err}`);
-            return { error: 'Storing Error' };
-          }
-        }
-      }
-      return bunchAgain;
-    };
 
-    try {
-      const check = await store(storeBunch); 
-      if(check) console.log('stored');
-      return true;
-    } catch (err) {
-      console.log(err);
-    } 
-  };
-
-  const storeOneTile = async (tile: any) => {
-    try {
-      const tileToStore = new Tile({ 
-        tile_id: tile.id, letter: tile.tile
-      });
-      tile.save();
-      return true;
-    } catch (err) {
-      console.log(`Error in Stroring single tile: ${err}`);
-      return { error: 'Storing Single Tile Error' };
-    }
-  };
-
-  const getOneTile = async () => {
-    const tile  = await Tile.findOneAndRemove({ tile_id: Math.floor(Math.random()*Tile.length) }, {}, (tile) => {
-      return tile;
-    });
-    return tile;
-  };
-
-  const createBunch = (tileSet: any) => {
-
+  const getTiles = (numberOfTiles: number) => {
+    
   };
 
   socket.on('hostSearch', handleHost);
@@ -233,21 +169,22 @@ io.on('connection', (socket: Socket) => {
   socket.on('roomReady', handleRoomReady);
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
-  socket.on('startGame', handleStartGame);
   socket.on('leaveGame', handleLeaveGame);
 
-  socket.on('createBunch', () => {
-    storeTilesCtrl(bunch);
+  socket.on('startGame', (gameRoomCode: string) => {
+    io.emit('startGame');
+
+    const bunch = shuffleBunch(buildBunch(tileSet));
+    socketRoomInformation[gameRoomCode] = {
+      ...socketRoomInformation[gameRoomCode],
+      roomTileSet: bunch,
+    };
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const currentTiles = currentRoom.roomTileSet;
+    console.log(currentTiles[0]);
   });
 
-  socket.on('getOneTile', function () {
-    socket.emit('returnOneTile', getOneTile());
-  });
 
-  socket.on('storeOneTile', function (tile) {
-    const tileToStore = tile;
-    socket.emit('tileStored', storeOneTile(tileToStore));
-  });
 
 });
 
