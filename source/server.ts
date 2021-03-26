@@ -169,6 +169,7 @@ io.on('connection', (socket: Socket) => {
           ...socketRoomInformation[gameRoomCode],
           [socket.id]: { 
             userName,
+            host: false,
           }
         };
         socket.join(gameRoomCode);
