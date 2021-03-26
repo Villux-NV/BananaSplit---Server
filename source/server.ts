@@ -72,7 +72,6 @@ const socketRoomInformation: any = {};
 // NOTE:       gameState/logic, 
 // NOTE:     } 
 // NOTE: }
-const allRooms: any = {}; // {socket.id: gameRoomCode} 
 
 // NOTE: io.on == server instance // socket == client connected
 io.on('connection', (socket: Socket) => {
@@ -81,8 +80,8 @@ io.on('connection', (socket: Socket) => {
   const ROOM_SIZE: number = 8;
   // NOTE: Socket.emit -> Sends to client/single user
   // socket.broadcast.emit -> Everyone but user
-  socket.emit('message', 'Welcome to Banana/Split');
-  socket.broadcast.emit('message', `Player has joined`);
+  // socket.emit('message', 'Welcome to Banana/Split');
+  // socket.broadcast.emit('message', `Player has joined`);
 
   // Disconnects player when tab/window is closed
   socket.on('disconnect', (reason) => {
@@ -136,7 +135,6 @@ io.on('connection', (socket: Socket) => {
     ROOM_ID = gameRoomCode;
     ROOM_USER = userName;
     // TODO: Rejoin if possible, or start new game
-    allRooms[socket.id] = gameRoomCode;
     socketResponse(true);
 
     socketRoomInformation[gameRoomCode] = {
@@ -180,6 +178,10 @@ io.on('connection', (socket: Socket) => {
     }
   };
 
+  const handleStartGame = () => {
+    io.emit('startGame');
+  };
+
   // Leave Game - removes player from room and individual room
   const handleLeaveGame = (gameRoomCode: string) => {
     socket.leave(gameRoomCode);
@@ -199,14 +201,13 @@ io.on('connection', (socket: Socket) => {
   };
 
   socket.on('hostSearch', handleHost);
-
   socket.on('getPlayersInRoom', handleGetPlayers);
   socket.on('playerReady', handlePlayerReady);
   socket.on('roomReady', handleRoomReady);
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
+  socket.on('startGame', handleStartGame);
   socket.on('leaveGame', handleLeaveGame);
-
   // socket.on('store', function () {
   //   socket.emit('stored', storeTilesCtrl(bunch));
   // });
