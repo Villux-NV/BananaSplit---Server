@@ -9,43 +9,9 @@ import http from 'http';
 import { Server, Socket } from 'socket.io';
 // import { getOneTile, storeTilesCtrl } from './lib/utils';
 import { RoomInformation } from './lib/interfaces';
-
-
-const mockBunch = [
-  ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
-  ['B', 'B', 'B'],
-  ['C', 'C', 'C'],
-  ['D', 'D', 'D', 'D', 'D', 'D'],
-  ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'],
-  ['F', 'F', 'F'],
-  ['G', 'G', 'G', 'G'],
-  ['H', 'H', 'H'],
-  ['I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I'],
-  ['J', 'J'],
-  ['K', 'K'],
-  ['L', 'L', 'L', 'L', 'L'],
-  ['M', 'M', 'M'],
-  ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
-  ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
-  ['P', 'P', 'P'],
-  ['Q', 'Q'],
-  ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'],
-  ['S', 'S', 'S', 'S', 'S', 'S'],
-  ['T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T'],
-  ['U', 'U', 'U', 'U', 'U', 'U'],
-  ['V', 'V', 'V'],
-  ['W', 'W', 'W'],
-  ['X', 'X'],
-  ['Y', 'Y', 'Y'],
-  ['Z', 'Z'],
-];
-
-let bunch: any[] = [];
-for (let i = 0; i < mockBunch.length; i++) {
-  for (let j = 0; j < mockBunch[i].length; j++) {
-    bunch.push({ tile: mockBunch[i][j], id: Object.keys(bunch).length });
-  }
-};
+import { Tile } from './models/tile.model';
+import { buildBunch, shuffleBunch } from './lib/utils';
+import { tileSet } from './lib/tileset';
 
 const app = express();
 const socketServer = new http.Server(app);
@@ -78,10 +44,6 @@ io.on('connection', (socket: Socket) => {
   let ROOM_ID: string;
   let ROOM_USER: string;
   const ROOM_SIZE: number = 8;
-  // NOTE: Socket.emit -> Sends to client/single user
-  // socket.broadcast.emit -> Everyone but user
-  // socket.emit('message', 'Welcome to Banana/Split');
-  // socket.broadcast.emit('message', `Player has joined`);
 
   // Disconnects player when tab/window is closed
   socket.on('disconnect', (reason) => {
@@ -103,7 +65,7 @@ io.on('connection', (socket: Socket) => {
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
   const handlePlayerReady = (gameRoomCode: string) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayer = currentRoom[socket.id].userName;
+    const currentPlayer = currentRoom[socket.id]?.userName;
     const currentReady = currentRoom.playersReady;
     currentReady.push(currentPlayer);
     console.log(currentRoom);
@@ -169,7 +131,7 @@ io.on('connection', (socket: Socket) => {
           ...socketRoomInformation[gameRoomCode],
           [socket.id]: { 
             userName,
-            host: false,
+            host: false
           }
         };
         socket.join(gameRoomCode);
@@ -177,10 +139,6 @@ io.on('connection', (socket: Socket) => {
         socketResponse('Joining');
       }
     }
-  };
-
-  const handleStartGame = () => {
-    io.emit('startGame');
   };
 
   // Leave Game - removes player from room and individual room
@@ -201,20 +159,33 @@ io.on('connection', (socket: Socket) => {
     };
   };
 
+  const getTiles = (numberOfTiles: number) => {
+    
+  };
+
   socket.on('hostSearch', handleHost);
   socket.on('getPlayersInRoom', handleGetPlayers);
   socket.on('playerReady', handlePlayerReady);
   socket.on('roomReady', handleRoomReady);
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
-  socket.on('startGame', handleStartGame);
   socket.on('leaveGame', handleLeaveGame);
-  // socket.on('store', function () {
-  //   socket.emit('stored', storeTilesCtrl(bunch));
-  // });
-  // socket.on('getOneTile', function () {
-  //   socket.emit('returnOneTile', getOneTile);
-  // });
+
+  socket.on('startGame', (gameRoomCode: string) => {
+    io.emit('startGame');
+
+    const bunch = shuffleBunch(buildBunch(tileSet));
+    socketRoomInformation[gameRoomCode] = {
+      ...socketRoomInformation[gameRoomCode],
+      roomTileSet: bunch,
+    };
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const currentTiles = currentRoom.roomTileSet;
+    console.log(currentTiles[0]);
+  });
+
+
+
 });
 
 app.get('*', (_, res) => {
