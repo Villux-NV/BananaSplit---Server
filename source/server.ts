@@ -9,6 +9,7 @@ import http from 'http';
 import { Server, Socket } from 'socket.io';
 // import { getOneTile, storeTilesCtrl } from './lib/utils';
 import { RoomInformation } from './lib/interfaces';
+import { Tile } from './models/tile.model';
 
 
 const mockBunch = [
@@ -199,6 +200,55 @@ io.on('connection', (socket: Socket) => {
       console.log('No player');
     };
   };
+  
+  const storeTilesCtrl = async (storeBunch: any) => {
+    const store = async (bunchAgain: any) => {
+      // const array = [];
+      // current issue with Tile creation
+      for(let i = 0; i <= Object.keys(bunchAgain).length; i++) {
+        for (let j=0; j<bunchAgain[i].length; j++) {
+          try {
+            const tile = new Tile({ 
+              tile_id: bunchAgain[i][j].id, letter: bunchAgain[i][j].tile
+            });
+            tile.save();
+          } catch (err) {
+            console.log(`Error in Stroring: ${err}`);
+            return { error: 'Storing Error' };
+          }
+        }
+      }
+      return bunchAgain;
+    };
+    
+    try {
+      const check = await store(storeBunch); 
+      if(check) console.log('stored');
+      return true;
+    } catch (err) {
+      console.log(err);
+    } 
+  };
+
+  const storeOneTile = async (tile: any) => {
+    try {
+      const tileToStore = new Tile({ 
+        tile_id: tile.id, letter: tile.tile
+      });
+      tile.save();
+      return true;
+    } catch (err) {
+      console.log(`Error in Stroring single tile: ${err}`);
+      return { error: 'Storing Single Tile Error' };
+    }
+  };
+
+  const getOneTile = async () => {
+    const tile  = await Tile.findOneAndRemove({ tile_id: Math.floor(Math.random()*Tile.length) }, {}, (tile) => {
+      return tile;
+    });
+    return tile;
+  };
 
   socket.on('hostSearch', handleHost);
   socket.on('getPlayersInRoom', handleGetPlayers);
@@ -208,12 +258,20 @@ io.on('connection', (socket: Socket) => {
   socket.on('joinGame', handleJoinGame);
   socket.on('startGame', handleStartGame);
   socket.on('leaveGame', handleLeaveGame);
-  // socket.on('store', function () {
-  //   socket.emit('stored', storeTilesCtrl(bunch));
-  // });
-  // socket.on('getOneTile', function () {
-  //   socket.emit('returnOneTile', getOneTile);
-  // });
+
+  socket.on('store', function (bunch) {
+    socket.emit('stored', storeTilesCtrl(bunch));
+  });
+
+  socket.on('getOneTile', function () {
+    socket.emit('returnOneTile', getOneTile());
+  });
+
+  socket.on('storeOneTile', function (tile) {
+    const tileToStore = tile;
+    socket.emit('tileStored', storeOneTile(tileToStore));
+  });
+
 });
 
 app.get('*', (_, res) => {
