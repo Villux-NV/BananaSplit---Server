@@ -164,7 +164,7 @@ io.on('connection', (socket: Socket) => {
     };
 
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const clients  = currentRoom.clients;
+    const clients = currentRoom.clients;
     const tilesObject: any = {};
 
     let numberOfTiles = 0;
@@ -178,12 +178,24 @@ io.on('connection', (socket: Socket) => {
     };
 
     Object.values(clients).map(({ socket }: any) => {
-      tilesObject[socket] = getTiles(gameRoomCode, numberOfTiles);
+      tilesObject[socket] = getTiles(gameRoomCode, 4);
     });
 
     console.log('start', currentRoom);
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   };
+
+  const handlePeelAction = (gameRoomCode: string) => {
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const clients = currentRoom.clients;
+    const tilesObject: any = {};
+
+    Object.values(clients).map(({ socket }: any) => {
+      tilesObject[socket] = getTiles(gameRoomCode, 1);
+    })
+    console.log(tilesObject, 'object after peel');
+    io.in(gameRoomCode).emit('receiveTiles', tilesObject);
+  }
 
   // Leave Game - removes player from room and individual room
   const handleLeaveGame = (gameRoomCode: string) => {
@@ -206,6 +218,7 @@ io.on('connection', (socket: Socket) => {
   const getTiles = (gameRoomCode: string, numberOfTiles: number) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
     const currentTiles = currentRoom.roomTileSet;
+    console.log(currentRoom, 'in get tiles');
     return currentTiles.splice(0, numberOfTiles);
   };
 
@@ -217,6 +230,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
   socket.on('startGame', handleStartGame);
+  socket.on('peelAction', handlePeelAction);
   socket.on('leaveGame', handleLeaveGame);
 });
 
