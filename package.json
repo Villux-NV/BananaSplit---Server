@@ -31,9 +31,13 @@
   },
   "scripts": {
     "dev": "ts-node-dev source/server.ts",
-    "start": "ts-node source/server.ts",
+    "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "commit": "cz"
+    "commit": "cz",
+    "build": "tsc"
+  },
+  "engines": {
+    "node": "14.16.0"
   },
   "repository": {
     "type": "git",

@@ -7,45 +7,9 @@ import router from './routes';
 import dbConnection from './models';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
-// import { getOneTile, storeTilesCtrl } from './lib/utils';
 import { RoomInformation } from './lib/interfaces';
-
-
-const mockBunch = [
-  ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A'],
-  ['B', 'B', 'B'],
-  ['C', 'C', 'C'],
-  ['D', 'D', 'D', 'D', 'D', 'D'],
-  ['E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E', 'E'],
-  ['F', 'F', 'F'],
-  ['G', 'G', 'G', 'G'],
-  ['H', 'H', 'H'],
-  ['I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I', 'I'],
-  ['J', 'J'],
-  ['K', 'K'],
-  ['L', 'L', 'L', 'L', 'L'],
-  ['M', 'M', 'M'],
-  ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
-  ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
-  ['P', 'P', 'P'],
-  ['Q', 'Q'],
-  ['R', 'R', 'R', 'R', 'R', 'R', 'R', 'R', 'R'],
-  ['S', 'S', 'S', 'S', 'S', 'S'],
-  ['T', 'T', 'T', 'T', 'T', 'T', 'T', 'T', 'T'],
-  ['U', 'U', 'U', 'U', 'U', 'U'],
-  ['V', 'V', 'V'],
-  ['W', 'W', 'W'],
-  ['X', 'X'],
-  ['Y', 'Y', 'Y'],
-  ['Z', 'Z'],
-];
-
-let bunch: any[] = [];
-for (let i = 0; i < mockBunch.length; i++) {
-  for (let j = 0; j < mockBunch[i].length; j++) {
-    bunch.push({ tile: mockBunch[i][j], id: Object.keys(bunch).length });
-  }
-};
+import { buildBunch, shuffleBunch } from './lib/utils';
+import { tileSet } from './lib/tileset';
 
 const app = express();
 const socketServer = new http.Server(app);
@@ -66,11 +30,14 @@ app.use('/', router);
 const socketRoomInformation: any = {};
 // NOTE: { gameRoomCode:
 // NOTE:     players: [...players],
-// NOTE:     socket.id: {
-// NOTE:       username, 
-// NOTE:       isReady, 
-// NOTE:       gameState/logic, 
-// NOTE:     } 
+// NOTE:     playersReady: [...players],
+// NOTE:     active: true | false,
+// NOTE:     clients: {
+// NOTE:        socket.id: {
+// NOTE:          username, 
+// NOTE:          isHost, 
+// NOTE:          socket: socket.id, 
+// NOTE:        } 
 // NOTE: }
 
 // NOTE: io.on == server instance // socket == client connected
@@ -78,10 +45,6 @@ io.on('connection', (socket: Socket) => {
   let ROOM_ID: string;
   let ROOM_USER: string;
   const ROOM_SIZE: number = 8;
-  // NOTE: Socket.emit -> Sends to client/single user
-  // socket.broadcast.emit -> Everyone but user
-  // socket.emit('message', 'Welcome to Banana/Split');
-  // socket.broadcast.emit('message', `Player has joined`);
 
   // Disconnects player when tab/window is closed
   socket.on('disconnect', (reason) => {
@@ -93,20 +56,29 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  // For front end to update players in room
+  socket.on('tileCheck', () => {
+    console.log(socketRoomInformation);
+  });
+
+  // TODO: Refactor repeated code(currentRoom/currentPlayer) into a helper function
   const handleGetPlayers = (code: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[code];
     const playersInRoom = currentRoom?.players;
     socketResponse(playersInRoom);
   };
 
+  const handleGetPlayersReady = (code: string, socketResponse: Function) => {
+    const currentRoom = socketRoomInformation[code];
+    const readyPlayers = currentRoom?.playersReady;
+    socketResponse(readyPlayers);
+  };
+
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
   const handlePlayerReady = (gameRoomCode: string) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayer = currentRoom[socket.id].userName;
+    const currentPlayer = currentRoom.clients[socket.id].userName;
     const currentReady = currentRoom.playersReady;
     currentReady.push(currentPlayer);
-    console.log(currentRoom);
   };
 
   const handleRoomReady = (gameRoomCode: string, socketResponse: Function) => {
@@ -125,8 +97,8 @@ io.on('connection', (socket: Socket) => {
 
   const handleHost = (gameRoomCode: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayer = currentRoom[socket.id];
-    const isHost = currentPlayer.host;
+    const currentPlayer = currentRoom.clients[socket.id];
+    const isHost = currentPlayer?.host;
     socketResponse(isHost);
   };
 
@@ -140,9 +112,13 @@ io.on('connection', (socket: Socket) => {
     socketRoomInformation[gameRoomCode] = {
       players: [userName],
       playersReady: [],
-      [socket.id]: { 
-        userName,
-        host: true,
+      active: false,
+      clients: {
+        [socket.id]: { 
+          userName,
+          host: true,
+          clientID: socket.id
+        }
       }
     };
     
@@ -156,32 +132,81 @@ io.on('connection', (socket: Socket) => {
     ROOM_USER = userName;
 
     const currentRoom = socketRoomInformation[gameRoomCode];
+    console.log(currentRoom, 'why issue');
     const currentPlayers = currentRoom.players;
+    const clients = currentRoom.clients;
 
     if (currentRoom) {
-      if (Object.keys(currentRoom).length === 0 || !currentRoom) {
+      if (currentRoom.active === true) {
+        socketResponse('Game Active');
+        console.log('room active', currentRoom);
+      } else if (Object.keys(clients).length === 0 || !currentRoom) {
         socketResponse('No Room');
-      } else if (Object.keys(currentRoom).length >= ROOM_SIZE) {
+      } else if (Object.keys(clients).length >= ROOM_SIZE) {
         socketResponse('Room Full');
       } else {
         currentPlayers.push(userName);
         socketRoomInformation[gameRoomCode] = {
           ...socketRoomInformation[gameRoomCode],
-          [socket.id]: { 
-            userName,
-            host: false,
+          clients: {
+            ...socketRoomInformation[gameRoomCode].clients,
+            [socket.id]: { 
+              userName,
+              host: false,
+              clientID: socket.id,
+            }
           }
         };
         socket.join(gameRoomCode);
         console.log('Socket Rooms', socketRoomInformation);
         socketResponse('Joining');
       }
+      console.log('No join', socketRoomInformation);
     }
   };
 
-  const handleStartGame = () => {
-    io.emit('startGame');
+  const handleStartGame = (gameRoomCode: string) => {
+    const bunch = shuffleBunch(buildBunch(tileSet));
+    socketRoomInformation[gameRoomCode] = {
+      ...socketRoomInformation[gameRoomCode],
+      active: true,
+      roomTileSet: bunch,
+    };
+
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    console.log(currentRoom, 'current room');
+    const clients = currentRoom.clients;
+    const tilesObject: any = {};
+
+    let numberOfTiles = 0;
+    const playersInRoom = currentRoom.players.length;
+    if (playersInRoom < 5) {
+      numberOfTiles = 21;
+    } else if (playersInRoom < 7) {
+      numberOfTiles = 15;
+    } else {
+      numberOfTiles = 11;
+    };
+
+    Object.values(clients).map(({ clientID }: any) => {
+      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
+    });
+
+    console.log('start', currentRoom);
+    io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   };
+
+  const handlePeelAction = (gameRoomCode: string) => {
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const clients = currentRoom.clients;
+    const tilesObject: any = {};
+
+    Object.values(clients).map(({ clientID }: any) => {
+      tilesObject[clientID] = getTiles(gameRoomCode, 1);
+    })
+
+    io.in(gameRoomCode).emit('receiveTiles', tilesObject);
+  }
 
   // Leave Game - removes player from room and individual room
   const handleLeaveGame = (gameRoomCode: string) => {
@@ -191,7 +216,7 @@ io.on('connection', (socket: Socket) => {
     const index = playersInRoom?.indexOf(ROOM_USER);
     
     if (currentRoom) {
-      delete currentRoom[socket.id];
+      delete currentRoom.clients[socket.id];
     };
 
     if (index >= 0) {
@@ -201,20 +226,23 @@ io.on('connection', (socket: Socket) => {
     };
   };
 
+  const getTiles = (gameRoomCode: string, numberOfTiles: number) => {
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const currentTiles = currentRoom.roomTileSet;
+    return currentTiles.splice(0, numberOfTiles);
+  };
+
+  // TODO: TS Enums -- can convert on refactor
   socket.on('hostSearch', handleHost);
   socket.on('getPlayersInRoom', handleGetPlayers);
+  socket.on('getPlayersReady', handleGetPlayersReady);
   socket.on('playerReady', handlePlayerReady);
   socket.on('roomReady', handleRoomReady);
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
   socket.on('startGame', handleStartGame);
+  socket.on('peelAction', handlePeelAction);
   socket.on('leaveGame', handleLeaveGame);
-  // socket.on('store', function () {
-  //   socket.emit('stored', storeTilesCtrl(bunch));
-  // });
-  // socket.on('getOneTile', function () {
-  //   socket.emit('returnOneTile', getOneTile);
-  // });
 });
 
 app.get('*', (_, res) => {
