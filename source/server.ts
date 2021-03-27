@@ -76,7 +76,8 @@ io.on('connection', (socket: Socket) => {
     const currentReady = currentRoom?.playersReady;
 
     if (currentPlayers || currentReady) {
-      if (currentPlayers.length === 1 || currentPlayers.length > currentReady.length) {
+      // TODO: pulled out for testing -- currentPlayers.length === 1 ||
+      if (currentPlayers.length > currentReady.length) {
         socketResponse(false);
       } else if (currentPlayers.length === currentReady.length) {
         socketResponse(true);

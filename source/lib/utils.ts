@@ -1,7 +1,7 @@
 export const buildBunch = (tileSet: any[]) => {
   let bunch: any[] = [];
   for (let i = 0; i < tileSet.length; i++) {
-    bunch.push({ letter: tileSet[i], id: i });
+    bunch.push({ letter: tileSet[i], id: `${i}` });
   };
   return bunch;
 };
