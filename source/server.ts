@@ -32,11 +32,13 @@ app.use('/', router);
 const socketRoomInformation: any = {};
 // NOTE: { gameRoomCode:
 // NOTE:     players: [...players],
-// NOTE:     socket.id: {
-// NOTE:       username, 
-// NOTE:       isReady, 
-// NOTE:       gameState/logic, 
-// NOTE:     } 
+// NOTE:     playersReady: [...players],
+// NOTE:     clients: {
+// NOTE:        socket.id: {
+// NOTE:          username, 
+// NOTE:          isHost, 
+// NOTE:          socket: socket.id, 
+// NOTE:        } 
 // NOTE: }
 
 // NOTE: io.on == server instance // socket == client connected
@@ -55,7 +57,7 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  // For front end to update players in room
+  // TODO: Refactor repeated code(currentRoom/currentPlayer) into a helper function
   const handleGetPlayers = (code: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[code];
     const playersInRoom = currentRoom?.players;
@@ -65,10 +67,9 @@ io.on('connection', (socket: Socket) => {
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
   const handlePlayerReady = (gameRoomCode: string) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayer = currentRoom[socket.id]?.userName;
+    const currentPlayer = currentRoom.clients[socket.id].userName;
     const currentReady = currentRoom.playersReady;
     currentReady.push(currentPlayer);
-    console.log(currentRoom);
   };
 
   const handleRoomReady = (gameRoomCode: string, socketResponse: Function) => {
@@ -87,8 +88,10 @@ io.on('connection', (socket: Socket) => {
 
   const handleHost = (gameRoomCode: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayer = currentRoom[socket.id];
-    const isHost = currentPlayer.host;
+    // console.log(currentRoom, 'Current Room');
+    const currentPlayer = currentRoom.clients[socket.id];
+    // console.log(currentPlayer, 'Current Player');
+    const isHost = currentPlayer?.host;
     socketResponse(isHost);
   };
 
@@ -99,12 +102,16 @@ io.on('connection', (socket: Socket) => {
     // TODO: Rejoin if possible, or start new game
     socketResponse(true);
 
+    // TODO: Update each object Client 
     socketRoomInformation[gameRoomCode] = {
       players: [userName],
       playersReady: [],
-      [socket.id]: { 
-        userName,
-        host: true,
+      clients: {
+        [socket.id]: { 
+          userName,
+          host: true,
+          socket: socket.id
+        }
       }
     };
     
@@ -129,9 +136,13 @@ io.on('connection', (socket: Socket) => {
         currentPlayers.push(userName);
         socketRoomInformation[gameRoomCode] = {
           ...socketRoomInformation[gameRoomCode],
-          [socket.id]: { 
-            userName,
-            host: false
+          clients: {
+            ...socketRoomInformation[gameRoomCode].clients,
+            [socket.id]: { 
+              userName,
+              host: false,
+              socket: socket.id,
+            }
           }
         };
         socket.join(gameRoomCode);
@@ -159,10 +170,13 @@ io.on('connection', (socket: Socket) => {
     };
   };
 
-  const getTiles = (numberOfTiles: number) => {
-    
+  const getTiles = (gameRoomCode: string, numberOfTiles: number) => {
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const currentTiles = currentRoom.roomTileSet;
+    return currentTiles.splice(0, numberOfTiles);
   };
 
+  // TODO: TS Enums -- can convert on refactor
   socket.on('hostSearch', handleHost);
   socket.on('getPlayersInRoom', handleGetPlayers);
   socket.on('playerReady', handlePlayerReady);
@@ -171,17 +185,24 @@ io.on('connection', (socket: Socket) => {
   socket.on('joinGame', handleJoinGame);
   socket.on('leaveGame', handleLeaveGame);
 
+  // TODO: Get separate tiles to each client
+  // TODO: Logic for number of players in room
   socket.on('startGame', (gameRoomCode: string) => {
-    io.emit('startGame');
-
     const bunch = shuffleBunch(buildBunch(tileSet));
     socketRoomInformation[gameRoomCode] = {
       ...socketRoomInformation[gameRoomCode],
       roomTileSet: bunch,
     };
+
     const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentTiles = currentRoom.roomTileSet;
-    console.log(currentTiles[0]);
+    const clients  = currentRoom.clients;
+    const tilesObject: any = {};
+
+    Object.values(clients).map(({ socket }: any) => {
+      tilesObject[socket] = getTiles(gameRoomCode, 5);
+    });
+
+    io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   });
 
 

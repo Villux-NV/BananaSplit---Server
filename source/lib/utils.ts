@@ -12,7 +12,7 @@ export const shuffleBunch = (arr: any[]) => {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   };
   return arr;
-}
+};
 
 
 
