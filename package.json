@@ -35,6 +35,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "commit": "cz"
   },
+  "engines": {
+    "node": "14.16.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Villux-NV/BananaSplit---Server.git"
