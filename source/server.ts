@@ -189,8 +189,8 @@ io.on('connection', (socket: Socket) => {
     const clients = currentRoom.clients;
     const tilesObject: any = {};
 
-    Object.values(clients).map(({ socket }: any) => {
-      tilesObject[socket] = getTiles(gameRoomCode, 1);
+    Object.values(clients).map(({ clientID }: any) => {
+      tilesObject[clientID] = getTiles(gameRoomCode, 1);
     })
 
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
