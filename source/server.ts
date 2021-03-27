@@ -56,11 +56,21 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  socket.on('tileCheck', () => {
+    console.log(socketRoomInformation);
+  });
+
   // TODO: Refactor repeated code(currentRoom/currentPlayer) into a helper function
   const handleGetPlayers = (code: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[code];
     const playersInRoom = currentRoom?.players;
     socketResponse(playersInRoom);
+  };
+
+  const handleGetPlayersReady = (code: string, socketResponse: Function) => {
+    const currentRoom = socketRoomInformation[code];
+    const readyPlayers = currentRoom?.playersReady;
+    socketResponse(readyPlayers);
   };
 
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
@@ -123,6 +133,7 @@ io.on('connection', (socket: Socket) => {
     ROOM_USER = userName;
 
     const currentRoom = socketRoomInformation[gameRoomCode];
+    console.log(currentRoom, 'why issue');
     const currentPlayers = currentRoom.players;
     const clients = currentRoom.clients;
 
@@ -164,6 +175,7 @@ io.on('connection', (socket: Socket) => {
     };
 
     const currentRoom = socketRoomInformation[gameRoomCode];
+    console.log(currentRoom, 'current room');
     const clients = currentRoom.clients;
     const tilesObject: any = {};
 
@@ -225,6 +237,7 @@ io.on('connection', (socket: Socket) => {
   // TODO: TS Enums -- can convert on refactor
   socket.on('hostSearch', handleHost);
   socket.on('getPlayersInRoom', handleGetPlayers);
+  socket.on('getPlayersReady', handleGetPlayersReady);
   socket.on('playerReady', handlePlayerReady);
   socket.on('roomReady', handleRoomReady);
   socket.on('privateGame', handlePrivateGame);
