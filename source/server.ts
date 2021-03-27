@@ -192,7 +192,7 @@ io.on('connection', (socket: Socket) => {
     Object.values(clients).map(({ socket }: any) => {
       tilesObject[socket] = getTiles(gameRoomCode, 1);
     })
-    console.log(tilesObject, 'object after peel');
+
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   }
 
@@ -217,7 +217,6 @@ io.on('connection', (socket: Socket) => {
   const getTiles = (gameRoomCode: string, numberOfTiles: number) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
     const currentTiles = currentRoom.roomTileSet;
-    console.log(currentRoom, 'in get tiles');
     return currentTiles.splice(0, numberOfTiles);
   };
 
