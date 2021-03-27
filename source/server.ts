@@ -7,9 +7,7 @@ import router from './routes';
 import dbConnection from './models';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
-// import { getOneTile, storeTilesCtrl } from './lib/utils';
 import { RoomInformation } from './lib/interfaces';
-import { Tile } from './models/tile.model';
 import { buildBunch, shuffleBunch } from './lib/utils';
 import { tileSet } from './lib/tileset';
 
@@ -88,9 +86,7 @@ io.on('connection', (socket: Socket) => {
 
   const handleHost = (gameRoomCode: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
-    // console.log(currentRoom, 'Current Room');
     const currentPlayer = currentRoom.clients[socket.id];
-    // console.log(currentPlayer, 'Current Player');
     const isHost = currentPlayer?.host;
     socketResponse(isHost);
   };
@@ -204,9 +200,6 @@ io.on('connection', (socket: Socket) => {
 
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   });
-
-
-
 });
 
 app.get('*', (_, res) => {
