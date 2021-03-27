@@ -107,7 +107,7 @@ io.on('connection', (socket: Socket) => {
         [socket.id]: { 
           userName,
           host: true,
-          socket: socket.id
+          clientID: socket.id
         }
       }
     };
@@ -142,7 +142,7 @@ io.on('connection', (socket: Socket) => {
             [socket.id]: { 
               userName,
               host: false,
-              socket: socket.id,
+              clientID: socket.id,
             }
           }
         };
@@ -176,8 +176,8 @@ io.on('connection', (socket: Socket) => {
       numberOfTiles = 11;
     };
 
-    Object.values(clients).map(({ socket }: any) => {
-      tilesObject[socket] = getTiles(gameRoomCode, 4);
+    Object.values(clients).map(({ clientID }: any) => {
+      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
     });
 
     console.log('start', currentRoom);
