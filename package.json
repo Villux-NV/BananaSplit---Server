@@ -31,7 +31,7 @@
   },
   "scripts": {
     "dev": "ts-node-dev source/server.ts",
-    "start": "node dist/server.js",
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "commit": "cz",
     "build": "tsc"
