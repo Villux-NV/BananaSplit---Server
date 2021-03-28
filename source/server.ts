@@ -259,7 +259,7 @@ const PORT = process.env.PORT || 4200;
       console.log(`Express Server lives at ${PORT}`);
     });
 
-    socketServer.listen(4300, () => {
+    socketServer.listen(PORT, () => {
       console.log(`Socket Server lives at 4300`);
     })
   } catch (err) {
