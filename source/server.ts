@@ -259,12 +259,12 @@ const PORT = process.env.PORT || 4200;
       console.log(`Express Server lives at ${PORT}`);
     });
 
-  //   socketServer.listen(PORT, () => {
-  //     console.log(`Socket Server lives at 4300`);
-  //   })
-  // } catch (err) {
-  //   console.log('Error:', err)
-  // }
+    // socketServer.listen(PORT, () => {
+    //   console.log(`Socket Server lives at 4300`);
+    // })
+  } catch (err) {
+    console.log('Error:', err)
+  }
 })();
 
 export default app;
