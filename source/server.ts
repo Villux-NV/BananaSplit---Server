@@ -8,8 +8,10 @@ import dbConnection from './models';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
 import { RoomInformation } from './lib/interfaces';
+import { getClients, getCurrentPlayer, getCurrentPlayerUserName, getCurrentPlayers, getCurrentRoom, getCurrentTiles, getPlayersInRoom, getCurrentReady } from './lib/socket/roomInformationHelpers';
 import { buildBunch, shuffleBunch } from './lib/utils';
 import { tileSet } from './lib/tileset';
+import { socketRoomInformation } from './lib/socket/roomInformation';
 
 const app = express();
 const socketServer = new http.Server(app);
@@ -25,9 +27,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/', router);
 
-// NOTE: Using as local memory - Current for players in room and all room created. 
-// NOTE: Could possibly be used for game/state logic
-const socketRoomInformation: any = {};
+// const socketRoomInformation: any = {};
 // NOTE: { gameRoomCode:
 // NOTE:     players: [...players],
 // NOTE:     playersReady: [...players],
@@ -40,7 +40,6 @@ const socketRoomInformation: any = {};
 // NOTE:        } 
 // NOTE: }
 
-// NOTE: io.on == server instance // socket == client connected
 io.on('connection', (socket: Socket) => {
   let ROOM_ID: string;
   let ROOM_USER: string;
@@ -61,12 +60,10 @@ io.on('connection', (socket: Socket) => {
   });
 
   // TODO: Refactor repeated code(currentRoom/currentPlayer) into a helper function
-  // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
   const handlePlayerReady = (gameRoomCode: string) => {
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayer = currentRoom.clients[socket.id].userName;
-    const currentPlayers = currentRoom.players;
-    const currentReady = currentRoom.playersReady;
+    const currentPlayer = getCurrentPlayerUserName(gameRoomCode, socket.id);
+    const currentPlayers = getCurrentPlayers(gameRoomCode);
+    const currentReady = getCurrentReady(gameRoomCode);
     if (!currentReady.includes(currentPlayer)) currentReady.push(currentPlayer);
 
     if (currentPlayers || currentReady) {
@@ -75,18 +72,16 @@ io.on('connection', (socket: Socket) => {
       } else if (currentPlayers.length === currentReady.length) {
         io.in(gameRoomCode).emit('roomReadyResponse', true);
       }
-    }
-
+    };
   };
 
-  const handleHost = (gameRoomCode: string, socketResponse: Function) => {
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayer = currentRoom.clients[socket.id];
+  const handleHost = (gameRoomCode: string) => {
+    const currentPlayer = getCurrentPlayer(gameRoomCode, socket.id);
     const isHost = currentPlayer?.host;
-    socketResponse(isHost);
+    socket.emit('hostResponse', isHost);
+    console.log(isHost, 'host coming?');
   };
 
-  // Create Private Game
   const handlePrivateGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
     ROOM_ID = gameRoomCode;
     ROOM_USER = userName;
@@ -109,6 +104,7 @@ io.on('connection', (socket: Socket) => {
     socket.join(gameRoomCode);
     io.in(gameRoomCode).emit('playersInRoom', [userName]);
     console.log('Create Game', socketRoomInformation);
+    console.log(getCurrentPlayer(gameRoomCode, socket.id));
   };
 
   // Join Private Game (Currently)
@@ -116,9 +112,9 @@ io.on('connection', (socket: Socket) => {
     ROOM_ID = gameRoomCode;
     ROOM_USER = userName;
 
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayers = currentRoom.players;
-    const clients = currentRoom.clients;
+    const currentRoom = getCurrentRoom(gameRoomCode);
+    const currentPlayers = getCurrentPlayers(gameRoomCode);
+    const clients = getClients(gameRoomCode);
 
     if (currentRoom) {
       if (currentRoom.active === true) {
@@ -149,10 +145,9 @@ io.on('connection', (socket: Socket) => {
   };
   
   const handleEnteredRoom = (gameRoomCode: string) => {
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const playersInRoom = currentRoom?.players;
-    console.log(playersInRoom);
-    io.in(gameRoomCode).emit('playersInRoom', playersInRoom);
+    const currentPlayers = getCurrentPlayers(gameRoomCode);
+    console.log(currentPlayers);
+    io.in(gameRoomCode).emit('playersInRoom', currentPlayers);
   };
 
   const handleStartGame = (gameRoomCode: string) => {
@@ -163,12 +158,12 @@ io.on('connection', (socket: Socket) => {
       roomTileSet: bunch,
     };
 
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const clients = currentRoom.clients;
+    const clients = getClients(gameRoomCode);
     const tilesObject: any = {};
 
     let numberOfTiles = 0;
-    const playersInRoom = currentRoom.players.length;
+    const currentPlayers = getCurrentPlayers(gameRoomCode);
+    const playersInRoom = currentPlayers.players.length;
     if (playersInRoom < 5) {
       numberOfTiles = 21;
     } else if (playersInRoom < 7) {
@@ -177,6 +172,7 @@ io.on('connection', (socket: Socket) => {
       numberOfTiles = 11;
     };
 
+    // TODO: Change to numberOfTiles
     Object.values(clients).map(({ clientID }: any) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 5);
     });
@@ -185,8 +181,7 @@ io.on('connection', (socket: Socket) => {
   };
 
   const handlePeelAction = (gameRoomCode: string) => {
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const clients = currentRoom.clients;
+    const clients = getClients(gameRoomCode);
     const tilesObject: any = {};
 
     Object.values(clients).map(({ clientID }: any) => {
@@ -195,13 +190,16 @@ io.on('connection', (socket: Socket) => {
 
     console.log(socket.id, tilesObject, 'tile to everyone');
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
-  }
+  };
 
-  // Leave Game - removes player from room and individual room
+  const handleDumpAction = (gameRoomCode: string) => {
+    const players = getPlayersInRoom(gameRoomCode);
+  };
+
   const handleLeaveGame = (gameRoomCode: string) => {
     socket.leave(gameRoomCode);
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const playersInRoom = currentRoom?.players;
+    const currentRoom = getCurrentRoom(gameRoomCode);
+    const playersInRoom = getCurrentPlayers(gameRoomCode);
     const index = playersInRoom?.indexOf(ROOM_USER);
     
     if (currentRoom) {
@@ -217,8 +215,7 @@ io.on('connection', (socket: Socket) => {
   };
 
   const getTiles = (gameRoomCode: string, numberOfTiles: number) => {
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentTiles = currentRoom.roomTileSet;
+    const currentTiles = getCurrentTiles(gameRoomCode);
     return currentTiles.splice(0, numberOfTiles);
   };
 
@@ -230,6 +227,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('joinGame', handleJoinGame);
   socket.on('startGame', handleStartGame);
   socket.on('peelAction', handlePeelAction);
+  socket.on('dumpAction', handleDumpAction);
   socket.on('leaveGame', handleLeaveGame);
 });
 
