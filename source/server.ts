@@ -61,10 +61,12 @@ io.on('connection', (socket: Socket) => {
   });
 
   // TODO: Refactor repeated code(currentRoom/currentPlayer) into a helper function
-  const handleGetPlayers = (code: string, socketResponse: Function) => {
+  const handleGetPlayers = (code: string/*, socketResponse: Function*/) => {
     const currentRoom = socketRoomInformation[code];
     const playersInRoom = currentRoom?.players;
-    socketResponse(playersInRoom);
+    socket.emit('playersInRoom', playersInRoom);
+    // socketResponse(playersInRoom);
+    console.log('loop');
   };
 
   const handleGetPlayersReady = (code: string, socketResponse: Function) => {
@@ -125,7 +127,8 @@ io.on('connection', (socket: Socket) => {
     };
     
     socket.join(gameRoomCode);
-    console.log('Socket Rooms', socketRoomInformation);
+    io.in(gameRoomCode).emit('playersInRoom', [userName]);
+    console.log('Socket Rooms Line 131', socketRoomInformation);
   };
 
   // Join Private Game (Currently)
@@ -161,10 +164,21 @@ io.on('connection', (socket: Socket) => {
         };
         socket.join(gameRoomCode);
         console.log('Socket Rooms', socketRoomInformation);
+        console.log('Line 167:', currentPlayers);
+        io.in(gameRoomCode).emit('playersInRoom', currentPlayers);
         socketResponse('Joining');
       }
       console.log('No join', socketRoomInformation);
     }
+  };
+  
+  const handleEnteredRoom = (gameRoomCode: string) => {
+    const currentRoom = socketRoomInformation[gameRoomCode];
+    const playersInRoom = currentRoom?.players;
+    // socketResponse(playersInRoom);
+    io.in(gameRoomCode).emit('playersInRoom', playersInRoom);
+    // socketResponse(playersInRoom);
+    console.log('loop');
   };
 
   const handleStartGame = (gameRoomCode: string) => {
@@ -181,15 +195,15 @@ io.on('connection', (socket: Socket) => {
     const clients = currentRoom.clients;
     const tilesObject: any = {};
 
-    // let numberOfTiles = 0;
-    // const playersInRoom = currentRoom.players.length;
-    // if (playersInRoom < 5) {
-    //   numberOfTiles = 21;
-    // } else if (playersInRoom < 7) {
-    //   numberOfTiles = 15;
-    // } else {
-    //   numberOfTiles = 11;
-    // };
+    let numberOfTiles = 0;
+    const playersInRoom = currentRoom.players.length;
+    if (playersInRoom < 5) {
+      numberOfTiles = 21;
+    } else if (playersInRoom < 7) {
+      numberOfTiles = 15;
+    } else {
+      numberOfTiles = 11;
+    };
     Object.values(clients).map(({ clientID }: any) => {
       tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
     });
@@ -236,7 +250,8 @@ io.on('connection', (socket: Socket) => {
 
   // TODO: TS Enums -- can convert on refactor
   socket.on('hostSearch', handleHost);
-  socket.on('getPlayersInRoom', handleGetPlayers);
+  // socket.on('getPlayersInRoom', handleGetPlayers);
+  socket.on('enteredRoom', handleEnteredRoom);
   socket.on('getPlayersReady', handleGetPlayersReady);
   socket.on('playerReady', handlePlayerReady);
   socket.on('roomReady', handleRoomReady);
