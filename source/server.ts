@@ -61,33 +61,22 @@ io.on('connection', (socket: Socket) => {
   });
 
   // TODO: Refactor repeated code(currentRoom/currentPlayer) into a helper function
-
-  const handleGetPlayersReady = (code: string, socketResponse: Function) => {
-    const currentRoom = socketRoomInformation[code];
-    const readyPlayers = currentRoom?.playersReady;
-    socketResponse(readyPlayers);
-  };
-
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
   const handlePlayerReady = (gameRoomCode: string) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
     const currentPlayer = currentRoom.clients[socket.id].userName;
+    const currentPlayers = currentRoom.players;
     const currentReady = currentRoom.playersReady;
     if (!currentReady.includes(currentPlayer)) currentReady.push(currentPlayer);
-  };
-
-  const handleRoomReady = (gameRoomCode: string, socketResponse: Function) => {
-    const currentRoom = socketRoomInformation[gameRoomCode];
-    const currentPlayers = currentRoom?.players;
-    const currentReady = currentRoom?.playersReady;
 
     if (currentPlayers || currentReady) {
       if (currentPlayers.length === 1 || currentPlayers.length > currentReady.length) {
-        socketResponse(false);
+        io.in(gameRoomCode).emit('roomReadyResponse', false);
       } else if (currentPlayers.length === currentReady.length) {
-        socketResponse(true);
-      };
-    };
+        io.in(gameRoomCode).emit('roomReadyResponse', true);
+      }
+    }
+
   };
 
   const handleHost = (gameRoomCode: string, socketResponse: Function) => {
@@ -187,8 +176,9 @@ io.on('connection', (socket: Socket) => {
     } else {
       numberOfTiles = 11;
     };
+
     Object.values(clients).map(({ clientID }: any) => {
-      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
+      tilesObject[clientID] = getTiles(gameRoomCode, 5);
     });
 
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
@@ -203,6 +193,7 @@ io.on('connection', (socket: Socket) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 1);
     })
 
+    console.log(socket.id, tilesObject, 'tile to everyone');
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   }
 
@@ -219,6 +210,7 @@ io.on('connection', (socket: Socket) => {
 
     if (index >= 0) {
       playersInRoom.splice(index, 1);
+      io.in(gameRoomCode).emit('playersInRoom', playersInRoom)
     } else {
       console.log('No player');
     };
@@ -233,9 +225,7 @@ io.on('connection', (socket: Socket) => {
   // TODO: TS Enums -- can convert on refactor
   socket.on('hostSearch', handleHost);
   socket.on('enteredRoom', handleEnteredRoom);
-  socket.on('getPlayersReady', handleGetPlayersReady);
   socket.on('playerReady', handlePlayerReady);
-  socket.on('roomReady', handleRoomReady);
   socket.on('privateGame', handlePrivateGame);
   socket.on('joinGame', handleJoinGame);
   socket.on('startGame', handleStartGame);
