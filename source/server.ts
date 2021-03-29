@@ -89,8 +89,7 @@ io.on('connection', (socket: Socket) => {
     const currentReady = currentRoom?.playersReady;
 
     if (currentPlayers || currentReady) {
-      // TODO: pulled out for testing -- currentPlayers.length === 1 ||
-      if (currentPlayers.length > currentReady.length) {
+      if (currentPlayers.length === 1 || currentPlayers.length > currentReady.length) {
         socketResponse(false);
       } else if (currentPlayers.length === currentReady.length) {
         socketResponse(true);
@@ -192,7 +191,7 @@ io.on('connection', (socket: Socket) => {
     //   numberOfTiles = 11;
     // };
     Object.values(clients).map(({ clientID }: any) => {
-      tilesObject[clientID] = getTiles(gameRoomCode, 4);
+      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
     });
 
     console.log('start', currentRoom);
@@ -204,10 +203,10 @@ io.on('connection', (socket: Socket) => {
     const clients = currentRoom.clients;
     const tilesObject: any = {};
 
-    Object.values(clients).map(({ socket }: any) => {
-      tilesObject[socket] = getTiles(gameRoomCode, 1);
+    Object.values(clients).map(({ clientID }: any) => {
+      tilesObject[clientID] = getTiles(gameRoomCode, 1);
     })
-    console.log(tilesObject, 'object after peel');
+
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   }
 
@@ -232,7 +231,6 @@ io.on('connection', (socket: Socket) => {
   const getTiles = (gameRoomCode: string, numberOfTiles: number) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
     const currentTiles = currentRoom.roomTileSet;
-    console.log(currentRoom, 'in get tiles');
     return currentTiles.splice(0, numberOfTiles);
   };
 

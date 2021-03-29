@@ -13,6 +13,7 @@ export const getUsers = async () => {
 export const getUserById = async (id: string) => {
   try {
     const user = await User.findOne({ _id: id });
+    console.log(user)
     return user;
   } catch (err) {
     console.log(`Error Get User By ID: ${err}`);
