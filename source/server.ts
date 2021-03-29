@@ -71,6 +71,7 @@ io.on('connection', (socket: Socket) => {
     const currentRoom = socketRoomInformation[code];
     const readyPlayers = currentRoom?.playersReady;
     socketResponse(readyPlayers);
+    console.log(socketResponse);
   };
 
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
@@ -78,7 +79,8 @@ io.on('connection', (socket: Socket) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
     const currentPlayer = currentRoom.clients[socket.id].userName;
     const currentReady = currentRoom.playersReady;
-    currentReady.push(currentPlayer);
+    if (!currentReady.includes(currentPlayer)) currentReady.push(currentPlayer);
+    console.log(currentReady);
   };
 
   const handleRoomReady = (gameRoomCode: string, socketResponse: Function) => {
@@ -167,6 +169,7 @@ io.on('connection', (socket: Socket) => {
   };
 
   const handleStartGame = (gameRoomCode: string) => {
+    console.log('current room#:', gameRoomCode);
     const bunch = shuffleBunch(buildBunch(tileSet));
     socketRoomInformation[gameRoomCode] = {
       ...socketRoomInformation[gameRoomCode],
@@ -179,16 +182,15 @@ io.on('connection', (socket: Socket) => {
     const clients = currentRoom.clients;
     const tilesObject: any = {};
 
-    let numberOfTiles = 0;
-    const playersInRoom = currentRoom.players.length;
-    if (playersInRoom < 5) {
-      numberOfTiles = 21;
-    } else if (playersInRoom < 7) {
-      numberOfTiles = 15;
-    } else {
-      numberOfTiles = 11;
-    };
-
+    // let numberOfTiles = 0;
+    // const playersInRoom = currentRoom.players.length;
+    // if (playersInRoom < 5) {
+    //   numberOfTiles = 21;
+    // } else if (playersInRoom < 7) {
+    //   numberOfTiles = 15;
+    // } else {
+    //   numberOfTiles = 11;
+    // };
     Object.values(clients).map(({ clientID }: any) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 4);
     });
