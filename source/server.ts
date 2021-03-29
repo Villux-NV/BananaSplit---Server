@@ -8,7 +8,16 @@ import dbConnection from './models';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
 import { RoomInformation } from './lib/interfaces';
-import { getClients, getCurrentPlayer, getCurrentPlayerUserName, getCurrentPlayers, getCurrentRoom, getCurrentTiles, getPlayersInRoom, getCurrentReady } from './lib/socket/roomInformationHelpers';
+import {
+  getClients,
+  getCurrentPlayer,
+  getCurrentPlayerUserName,
+  getCurrentPlayers,
+  getCurrentRoom,
+  getCurrentTiles,
+  getTilesRemaining,
+  getCurrentReady
+} from './lib/socket/roomInformationHelpers';
 import { buildBunch, shuffleBunch } from './lib/utils';
 import { tileSet } from './lib/tileset';
 import { socketRoomInformation } from './lib/socket/roomInformation';
@@ -79,7 +88,6 @@ io.on('connection', (socket: Socket) => {
     const currentPlayer = getCurrentPlayer(gameRoomCode, socket.id);
     const isHost = currentPlayer?.host;
     socket.emit('hostResponse', isHost);
-    console.log(isHost, 'host coming?');
   };
 
   const handlePrivateGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
@@ -104,7 +112,6 @@ io.on('connection', (socket: Socket) => {
     socket.join(gameRoomCode);
     io.in(gameRoomCode).emit('playersInRoom', [userName]);
     console.log('Create Game', socketRoomInformation);
-    console.log(getCurrentPlayer(gameRoomCode, socket.id));
   };
 
   // Join Private Game (Currently)
@@ -119,7 +126,6 @@ io.on('connection', (socket: Socket) => {
     if (currentRoom) {
       if (currentRoom.active === true) {
         socketResponse('Game Active');
-        console.log('room active', currentRoom);
       } else if (Object.keys(clients).length === 0 || !currentRoom) {
         socketResponse('No Room');
       } else if (Object.keys(clients).length >= ROOM_SIZE) {
@@ -146,7 +152,6 @@ io.on('connection', (socket: Socket) => {
   
   const handleEnteredRoom = (gameRoomCode: string) => {
     const currentPlayers = getCurrentPlayers(gameRoomCode);
-    console.log(currentPlayers);
     io.in(gameRoomCode).emit('playersInRoom', currentPlayers);
   };
 
@@ -163,7 +168,7 @@ io.on('connection', (socket: Socket) => {
 
     let numberOfTiles = 0;
     const currentPlayers = getCurrentPlayers(gameRoomCode);
-    const playersInRoom = currentPlayers.players.length;
+    const playersInRoom = currentPlayers.length;
     if (playersInRoom < 5) {
       numberOfTiles = 21;
     } else if (playersInRoom < 7) {
@@ -177,6 +182,7 @@ io.on('connection', (socket: Socket) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 5);
     });
 
+    io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   };
 
@@ -188,12 +194,22 @@ io.on('connection', (socket: Socket) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 1);
     })
 
-    console.log(socket.id, tilesObject, 'tile to everyone');
+    io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   };
 
-  const handleDumpAction = (gameRoomCode: string) => {
-    const players = getPlayersInRoom(gameRoomCode);
+  const handleDumpAction = ({ id, tileToDump }: any) => {
+    const currentTiles = getCurrentTiles(id);
+    const tilesObject: any = {};
+
+    console.log(tileToDump, 'dumping tile, going back');
+    currentTiles.push(tileToDump);
+
+    tilesObject[socket.id] = getTiles(id, 3);
+
+    console.log(tilesObject, 'dump tiles');
+    socket.emit('receiveTiles', tilesObject);
+    io.in(id).emit('tilesRemaining', getTilesRemaining(id));
   };
 
   const handleLeaveGame = (gameRoomCode: string) => {

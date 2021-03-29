@@ -38,3 +38,8 @@ export const getCurrentTiles = (gameRoomCode: string) => {
   const currentRoom = getCurrentRoom(gameRoomCode);
   return currentRoom.roomTileSet;
 };
+
+export const getTilesRemaining = (gameRoomCode: string) => {
+  const currentRoom = getCurrentRoom(gameRoomCode);
+  return currentRoom.roomTileSet.length;
+};
