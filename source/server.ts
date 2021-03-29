@@ -61,19 +61,11 @@ io.on('connection', (socket: Socket) => {
   });
 
   // TODO: Refactor repeated code(currentRoom/currentPlayer) into a helper function
-  const handleGetPlayers = (code: string/*, socketResponse: Function*/) => {
-    const currentRoom = socketRoomInformation[code];
-    const playersInRoom = currentRoom?.players;
-    socket.emit('playersInRoom', playersInRoom);
-    // socketResponse(playersInRoom);
-    console.log('loop');
-  };
 
   const handleGetPlayersReady = (code: string, socketResponse: Function) => {
     const currentRoom = socketRoomInformation[code];
     const readyPlayers = currentRoom?.playersReady;
     socketResponse(readyPlayers);
-    console.log(socketResponse);
   };
 
   // TODO: Need logic if pressed multiple times--Press Once || unready when pressed
@@ -82,7 +74,6 @@ io.on('connection', (socket: Socket) => {
     const currentPlayer = currentRoom.clients[socket.id].userName;
     const currentReady = currentRoom.playersReady;
     if (!currentReady.includes(currentPlayer)) currentReady.push(currentPlayer);
-    console.log(currentReady);
   };
 
   const handleRoomReady = (gameRoomCode: string, socketResponse: Function) => {
@@ -128,7 +119,6 @@ io.on('connection', (socket: Socket) => {
     
     socket.join(gameRoomCode);
     io.in(gameRoomCode).emit('playersInRoom', [userName]);
-    console.log('Socket Rooms Line 131', socketRoomInformation);
   };
 
   // Join Private Game (Currently)
@@ -137,7 +127,6 @@ io.on('connection', (socket: Socket) => {
     ROOM_USER = userName;
 
     const currentRoom = socketRoomInformation[gameRoomCode];
-    console.log(currentRoom, 'why issue');
     const currentPlayers = currentRoom.players;
     const clients = currentRoom.clients;
 
@@ -163,26 +152,19 @@ io.on('connection', (socket: Socket) => {
           }
         };
         socket.join(gameRoomCode);
-        console.log('Socket Rooms', socketRoomInformation);
-        console.log('Line 167:', currentPlayers);
         io.in(gameRoomCode).emit('playersInRoom', currentPlayers);
         socketResponse('Joining');
       }
-      console.log('No join', socketRoomInformation);
     }
   };
   
   const handleEnteredRoom = (gameRoomCode: string) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
     const playersInRoom = currentRoom?.players;
-    // socketResponse(playersInRoom);
     io.in(gameRoomCode).emit('playersInRoom', playersInRoom);
-    // socketResponse(playersInRoom);
-    console.log('loop');
   };
 
   const handleStartGame = (gameRoomCode: string) => {
-    console.log('current room#:', gameRoomCode);
     const bunch = shuffleBunch(buildBunch(tileSet));
     socketRoomInformation[gameRoomCode] = {
       ...socketRoomInformation[gameRoomCode],
@@ -191,7 +173,6 @@ io.on('connection', (socket: Socket) => {
     };
 
     const currentRoom = socketRoomInformation[gameRoomCode];
-    console.log(currentRoom, 'current room');
     const clients = currentRoom.clients;
     const tilesObject: any = {};
 
@@ -208,7 +189,6 @@ io.on('connection', (socket: Socket) => {
       tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
     });
 
-    console.log('start', currentRoom);
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
   };
 
@@ -250,7 +230,6 @@ io.on('connection', (socket: Socket) => {
 
   // TODO: TS Enums -- can convert on refactor
   socket.on('hostSearch', handleHost);
-  // socket.on('getPlayersInRoom', handleGetPlayers);
   socket.on('enteredRoom', handleEnteredRoom);
   socket.on('getPlayersReady', handleGetPlayersReady);
   socket.on('playerReady', handlePlayerReady);
