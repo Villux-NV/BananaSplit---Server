@@ -119,6 +119,7 @@ io.on('connection', (socket: Socket) => {
     
     socket.join(gameRoomCode);
     io.in(gameRoomCode).emit('playersInRoom', [userName]);
+    console.log('Create Game', socketRoomInformation);
   };
 
   // Join Private Game (Currently)
@@ -161,6 +162,7 @@ io.on('connection', (socket: Socket) => {
   const handleEnteredRoom = (gameRoomCode: string) => {
     const currentRoom = socketRoomInformation[gameRoomCode];
     const playersInRoom = currentRoom?.players;
+    console.log(playersInRoom);
     io.in(gameRoomCode).emit('playersInRoom', playersInRoom);
   };
 
