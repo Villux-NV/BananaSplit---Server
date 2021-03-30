@@ -32,39 +32,42 @@ export const createUser = async (email: string, userName: string, uid: string) =
   }
 };
 
-// TODO: Refactor to separate actions for Score and Word
-export const updateUser = async (field: string, id: string, word: string) => {
+export const updateUserWord = async (id: string, word: string) => {
   try {
-    if (field === 'score') {
-      await User.updateOne(
-        { _id: id },
-        { $inc: { score: 1 } },
-        { new: true }
-        );
-      return true;
-    } else if (field === 'word') {
-      const user: any = await User.findOne({ _id: id });
-      if (user.longest_word) {
-        if (user.longest_word.length < word.length || user.longest_word.length === word.length) {
-          await User.updateOne(
-            { _id: id },
-            { longest_word: word },
-            { new: true}
-            );
-          return true;
-        } else {
-          return false;
-        }
-      } else {
+    const user: any = await User.findOne({ _id: id });
+    if (user.longest_word) {
+      if (user.longest_word.length < word.length || user.longest_word.length === word.length) {
         await User.updateOne(
           { _id: id },
           { longest_word: word },
           { new: true}
           );
         return true;
+      } else {
+        return false;
       }
-    };
-    return false;
+    } else {
+      await User.updateOne(
+        { _id: id },
+        { longest_word: word },
+        { new: true}
+        );
+      return true;
+    }
+  } catch (err) {
+    console.log(`Error Update User: ${err}`);
+    return { error: 'DB Connection: Update User'};
+  }
+};
+
+export const updateUserScore = async (id: string) => {
+  try {
+    await User.updateOne(
+      { _id: id },
+      { $inc: { score: 1 } },
+      { new: true }
+      );
+    return true;
   } catch (err) {
     console.log(`Error Update User: ${err}`);
     return { error: 'DB Connection: Update User'};

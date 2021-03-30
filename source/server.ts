@@ -185,7 +185,7 @@ io.on('connection', (socket: Socket) => {
     socket.emit('roomActive', getRoomStatus(gameRoomCode));
     io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
-    io.in(gameRoomCode).emit('actionMessage', 'Banana!!!');
+    io.in(gameRoomCode).emit('actionMessage', 'Split!!!');
   };
 
   const handlePeelAction = (gameRoomCode: string) => {
