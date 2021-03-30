@@ -41,5 +41,10 @@ export const getCurrentTiles = (gameRoomCode: string) => {
 
 export const getTilesRemaining = (gameRoomCode: string) => {
   const currentRoom = getCurrentRoom(gameRoomCode);
-  return currentRoom.roomTileSet.length;
+  return currentRoom.roomTileSet?.length;
+};
+
+export const getRoomStatus = (gameRoomCode: string) => {
+  const currentRoom = getCurrentRoom(gameRoomCode);
+  return currentRoom.active;
 };

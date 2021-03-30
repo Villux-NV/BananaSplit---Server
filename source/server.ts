@@ -16,7 +16,8 @@ import {
   getCurrentRoom,
   getCurrentTiles,
   getTilesRemaining,
-  getCurrentReady
+  getCurrentReady,
+  getRoomStatus
 } from './lib/socket/roomInformationHelpers';
 import { buildBunch, shuffleBunch } from './lib/utils';
 import { tileSet } from './lib/tileset';
@@ -64,11 +65,6 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  socket.on('tileCheck', () => {
-    console.log(socketRoomInformation);
-  });
-
-  // TODO: Refactor repeated code(currentRoom/currentPlayer) into a helper function
   const handlePlayerReady = (gameRoomCode: string) => {
     const currentPlayer = getCurrentPlayerUserName(gameRoomCode, socket.id);
     const currentPlayers = getCurrentPlayers(gameRoomCode);
@@ -89,8 +85,7 @@ io.on('connection', (socket: Socket) => {
 
   const handleHost = (gameRoomCode: string) => {
     const currentPlayer = getCurrentPlayer(gameRoomCode, socket.id);
-    const isHost = currentPlayer?.host;
-    socket.emit('hostResponse', isHost);
+    socket.emit('hostResponse', currentPlayer?.host);
   };
 
   const handlePrivateGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
@@ -98,11 +93,13 @@ io.on('connection', (socket: Socket) => {
     ROOM_USER = userName;
     // TODO: Rejoin if possible, or start new game
     socketResponse(true);
-
+    
+    const bunch = shuffleBunch(buildBunch(tileSet));
     socketRoomInformation[gameRoomCode] = {
       players: [userName],
       playersReady: [],
       active: false,
+      roomTileSet: bunch,
       clients: {
         [socket.id]: { 
           userName,
@@ -115,6 +112,7 @@ io.on('connection', (socket: Socket) => {
     socket.join(gameRoomCode);
     io.in(gameRoomCode).emit('playersInRoom', [userName]);
     io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} is Host`);
+    console.log(getTilesRemaining(gameRoomCode));
     console.log('Create Game', socketRoomInformation);
   };
 
@@ -156,14 +154,13 @@ io.on('connection', (socket: Socket) => {
   
   const handleEnteredRoom = (gameRoomCode: string) => {
     io.in(gameRoomCode).emit('playersInRoom', getCurrentPlayers(gameRoomCode));
+    io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
   };
 
   const handleStartGame = (gameRoomCode: string) => {
-    const bunch = shuffleBunch(buildBunch(tileSet));
     socketRoomInformation[gameRoomCode] = {
       ...socketRoomInformation[gameRoomCode],
       active: true,
-      roomTileSet: bunch,
     };
 
     const clients = getClients(gameRoomCode);
@@ -185,6 +182,7 @@ io.on('connection', (socket: Socket) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 5);
     });
 
+    socket.emit('roomActive', getRoomStatus(gameRoomCode));
     io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
     io.in(gameRoomCode).emit('actionMessage', 'Banana!!!');
@@ -207,12 +205,9 @@ io.on('connection', (socket: Socket) => {
     const currentTiles = getCurrentTiles(id);
     const tilesObject: any = {};
 
-    console.log(tileToDump, 'dumping tile, going back');
     currentTiles.push(tileToDump);
 
     tilesObject[socket.id] = getTiles(id, 3);
-
-    console.log(tilesObject, 'dump tiles');
     socket.emit('receiveTiles', tilesObject);
     io.in(id).emit('tilesRemaining', getTilesRemaining(id));
     io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} Dumped..`)
