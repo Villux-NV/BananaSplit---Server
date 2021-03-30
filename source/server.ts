@@ -50,6 +50,8 @@ app.use('/', router);
 // NOTE:        } 
 // NOTE: }
 
+// TODO: Refactor socket -- extract to other folders
+// TODO: Create TS interfaces for all any
 io.on('connection', (socket: Socket) => {
   let ROOM_ID: string;
   let ROOM_USER: string;
@@ -177,9 +179,8 @@ io.on('connection', (socket: Socket) => {
       numberOfTiles = 11;
     };
 
-    // TODO: Change to numberOfTiles
     Object.values(clients).map(({ clientID }: any) => {
-      tilesObject[clientID] = getTiles(gameRoomCode, 5);
+      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
     });
 
     socket.emit('roomActive', getRoomStatus(gameRoomCode));

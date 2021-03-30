@@ -14,8 +14,3 @@ export interface RoomInformation {
   id: string,
   userName: string,
 }
-
-export interface TileDocument extends Document {
-  id?: number;
-  letter?: string;
-};
