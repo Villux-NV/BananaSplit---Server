@@ -16,7 +16,7 @@ export const getCurrentPlayer = (gameRoomCode: string, clientID: string) => {
 
 export const getCurrentPlayerUserName = (gameRoomCode: string, clientID: string) => {
   const currentRoom = getCurrentRoom(gameRoomCode);
-  return currentRoom.clients[clientID].userName;
+  return currentRoom?.clients[clientID]?.userName;
 };
 
 export const getCurrentPlayers = (gameRoomCode: string) => {
