@@ -7,8 +7,9 @@ import router from './routes';
 import dbConnection from './models';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
-import { RoomInformation } from './lib/interfaces';
+import { RoomInformation, GameEnd, SocketInfo, ClientInfo } from './lib/interfaces';
 import {
+  socketRoomInformation,
   getClients,
   getCurrentPlayer,
   getCurrentPlayerUserName,
@@ -21,7 +22,6 @@ import {
 } from './lib/socket/roomInformationHelpers';
 import { buildBunch, shuffleBunch } from './lib/utils';
 import { tileSet } from './lib/tileset';
-import { socketRoomInformation } from './lib/socket/roomInformation';
 
 const app = express();
 const socketServer = new http.Server(app);
@@ -37,25 +37,14 @@ app.use(cors());
 app.use(express.json());
 app.use('/', router);
 
-// const socketRoomInformation: any = {};
-// NOTE: { gameRoomCode:
-// NOTE:     players: [...players],
-// NOTE:     playersReady: [...players],
-// NOTE:     active: true | false,
-// NOTE:     clients: {
-// NOTE:        socket.id: {
-// NOTE:          username, 
-// NOTE:          isHost, 
-// NOTE:          socket: socket.id, 
-// NOTE:        } 
-// NOTE: }
-
 io.on('connection', (socket: Socket) => {
   let ROOM_ID: string;
   let ROOM_USER: string;
   const ROOM_SIZE: number = 8;
 
   // Disconnects player when tab/window is closed
+  // TODO: Send tiles back into bunch
+  // TODO: Pass host to another player if host left
   socket.on('disconnect', (reason) => {
     try {
       socket.leave(ROOM_ID);
@@ -83,11 +72,13 @@ io.on('connection', (socket: Socket) => {
     };
   };
 
+  // TODO: Pass onto another player if host leaves
   const handleHost = (gameRoomCode: string) => {
     const currentPlayer = getCurrentPlayer(gameRoomCode, socket.id);
     socket.emit('hostResponse', currentPlayer?.host);
   };
 
+  // TODO: May need endGame flag 
   const handlePrivateGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
     ROOM_ID = gameRoomCode;
     ROOM_USER = userName;
@@ -116,7 +107,6 @@ io.on('connection', (socket: Socket) => {
     console.log('Create Game', socketRoomInformation);
   };
 
-  // Join Private Game (Currently)
   const handleJoinGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
     ROOM_ID = gameRoomCode;
     ROOM_USER = userName;
@@ -163,7 +153,7 @@ io.on('connection', (socket: Socket) => {
       active: true,
     };
 
-    const clients = getClients(gameRoomCode);
+    const clients: ClientInfo = getClients(gameRoomCode);
     const tilesObject: any = {};
 
     let numberOfTiles = 0;
@@ -178,7 +168,7 @@ io.on('connection', (socket: Socket) => {
     };
 
     // TODO: Change to numberOfTiles
-    Object.values(clients).map(({ clientID }: any) => {
+    Object.values(clients).map(({ clientID }: SocketInfo) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 5);
     });
 
@@ -189,10 +179,10 @@ io.on('connection', (socket: Socket) => {
   };
 
   const handlePeelAction = (gameRoomCode: string) => {
-    const clients = getClients(gameRoomCode);
+    const clients: ClientInfo = getClients(gameRoomCode);
     const tilesObject: any = {};
 
-    Object.values(clients).map(({ clientID }: any) => {
+    Object.values(clients).map(({ clientID }: SocketInfo) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 1);
     })
 
@@ -201,7 +191,7 @@ io.on('connection', (socket: Socket) => {
     io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} Peeled! +1`);
   };
 
-  const handleDumpAction = ({ id, tileToDump }: any) => {
+  const handleDumpAction = ({ id, tileToDump }: GameEnd) => {
     const currentTiles = getCurrentTiles(id);
     const tilesObject: any = {};
 
@@ -213,6 +203,15 @@ io.on('connection', (socket: Socket) => {
     io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} Dumped..`)
   };
 
+  const handleRottenBanana = ({ id, rottenTiles }: GameEnd) => {
+    const userName = getCurrentPlayerUserName(id, socket.id);
+    const currentTiles = getCurrentTiles(id);
+    currentTiles.push(rottenTiles);
+    io.in(id).emit('tilesRemaining', getTilesRemaining(id));
+    io.in(id).emit('actionMessage', `${userName} is a Rotten Banana!`);
+  };
+
+  // TODO: Pass host flag if host leaves
   const handleLeaveGame = (gameRoomCode: string) => {
     socket.leave(gameRoomCode);
     const currentRoom = getCurrentRoom(gameRoomCode);
@@ -247,6 +246,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('startGame', handleStartGame);
   socket.on('peelAction', handlePeelAction);
   socket.on('dumpAction', handleDumpAction);
+  socket.on('rottenBanana', handleRottenBanana);
   socket.on('leaveGame', handleLeaveGame);
 });
 

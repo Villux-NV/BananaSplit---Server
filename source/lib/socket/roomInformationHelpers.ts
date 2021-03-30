@@ -1,4 +1,15 @@
-import { socketRoomInformation } from "./roomInformation";
+export const socketRoomInformation: any = {};
+// NOTE: { gameRoomCode:
+// NOTE:     players: [...players],
+// NOTE:     playersReady: [...players],
+// NOTE:     active: true | false,
+// NOTE:     clients: {
+// NOTE:        socket.id: {
+// NOTE:          username, 
+// NOTE:          isHost, 
+// NOTE:          socket: socket.id, 
+// NOTE:        } 
+// NOTE: }
 
 export const getCurrentRoom = (gameRoomCode: string) => {
   return socketRoomInformation[gameRoomCode];
@@ -36,12 +47,12 @@ export const getClients = (gameRoomCode: string) => {
 
 export const getCurrentTiles = (gameRoomCode: string) => {
   const currentRoom = getCurrentRoom(gameRoomCode);
-  return currentRoom.roomTileSet;
+  return currentRoom?.roomTileSet;
 };
 
 export const getTilesRemaining = (gameRoomCode: string) => {
   const currentRoom = getCurrentRoom(gameRoomCode);
-  return currentRoom.roomTileSet?.length;
+  return currentRoom?.roomTileSet?.length;
 };
 
 export const getRoomStatus = (gameRoomCode: string) => {

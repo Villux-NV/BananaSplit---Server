@@ -1,4 +1,5 @@
 import { Document } from 'mongoose';
+import { TileSet } from './utils';
 
 export interface UserDocument extends Document {
   userName?: string,
@@ -9,9 +10,8 @@ export interface UserDocument extends Document {
   guest?: boolean,
 }
 
-export interface RoomInformation {
+export interface RoomInformation extends Document {
   gameRoomCode: string,
-  id: string,
   userName: string,
 }
 
@@ -19,3 +19,20 @@ export interface TileDocument extends Document {
   id?: number;
   letter?: string;
 };
+
+export interface GameEnd extends Document {
+  id: string,
+  tileToDump?: TileSet,
+  rottenTiles?: TileSet
+}
+
+export interface SocketInfo extends Document {
+  userName: string,
+  host: boolean,
+  clientID: string
+};
+
+export interface ClientInfo extends Document {
+  SocketID: SocketInfo
+};
+
