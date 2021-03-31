@@ -225,17 +225,25 @@ io.on('connection', (socket: Socket) => {
     io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} dumped..`);
   };
 
-  const handleRottenBanana = ({ id, rottenTiles }: GameEnd) => {
-    const userName = getCurrentPlayerUserName(id, socket.id);
-    console.log(id, 'firing in rotten banana');
-    handleLeaveGame(id);
-    io.in(id).emit('tilesRemaining', getTilesRemaining(id));
-    io.in(id).emit('actionMessage', `${userName} is a Rotten Banana!`);
+  const handleRottenBanana = (gameRoomCode: string) => {
+    const userName = getCurrentPlayerUserName(gameRoomCode, socket.id);
+    handleLeaveGame(gameRoomCode);
+    io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
+    io.in(gameRoomCode).emit('actionMessage', `${userName} is a rotten banana!`);
+    io.in(gameRoomCode).emit('rottenBananaResponse', getCurrentPlayerUserName(gameRoomCode, socket.id));
   };
 
-  const handleEndGame = (gameRoomCode: string) => {
-    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} won!`);
-    io.in(gameRoomCode).emit('endGameResponse', getCurrentPlayerUserName(gameRoomCode, socket.id));
+  const handleEndGame = ({ id, playerWordObject }: any) => {
+    console.log('winner words', playerWordObject);
+    io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} won!`);
+    io.in(id).emit('endGameResponse', getCurrentPlayerUserName(id, socket.id));
+    socket.in(id).emit('roomWordCheck', playerWordObject);
+  }
+
+  const handleWordResponse = (objects: any) => {
+    console.log('incoming objects', objects);
+
+    // TODO: Find username/count for longest word/most words/least words
   }
 
   const handleLeaveGame = (gameRoomCode: string) => {
@@ -292,6 +300,8 @@ io.on('connection', (socket: Socket) => {
   socket.on('rottenBanana', handleRottenBanana);
   socket.on('endGame', handleEndGame);
   socket.on('leaveGame', handleLeaveGame);
+
+  socket.on('roomWordCheckResponse', handleWordResponse);
 });
 
 app.get('*', (_, res) => {
