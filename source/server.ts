@@ -105,7 +105,7 @@ io.on('connection', (socket: Socket) => {
     
     socket.join(gameRoomCode);
     io.in(gameRoomCode).emit('playersInRoom', [userName]);
-    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} is Host`);
+    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} is host`);
     console.log('Create Game', socketRoomInformation);
   };
 
@@ -139,7 +139,7 @@ io.on('connection', (socket: Socket) => {
       };
       socket.join(gameRoomCode);
       io.in(gameRoomCode).emit('playersInRoom', currentPlayers);
-      io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} Joined`);
+      io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} joined`);
       socketResponse('Joining');
     }
   };
@@ -170,7 +170,7 @@ io.on('connection', (socket: Socket) => {
     };
 
     Object.values(clients).map(({ clientID }: any) => {
-      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
+      tilesObject[clientID] = getTiles(gameRoomCode, 5);
     });
 
     Object.keys(clients).map((client) => {
@@ -180,7 +180,7 @@ io.on('connection', (socket: Socket) => {
     io.in(gameRoomCode).emit('roomActive', getRoomStatus(gameRoomCode));
     io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
-    io.in(gameRoomCode).emit('actionMessage', 'Split!!!');
+    io.in(gameRoomCode).emit('actionMessage', 'split!!!');
   };
 
   // TODO: Send priority to person to sent event
@@ -200,13 +200,12 @@ io.on('connection', (socket: Socket) => {
 
     io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
-    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} Peeled! +1`);
+    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} peeled! +1`);
   };
 
 
   const handleDumpAction = ({ id, tileToDump }: GameEnd) => {
     const currentTiles = getCurrentTiles(id);
-    console.log(currentTiles, 'bunch tiles start dump');
     const currentPlayer = getCurrentPlayer(id, socket.id);
     const tilesObject: any = {};
 
@@ -223,7 +222,7 @@ io.on('connection', (socket: Socket) => {
     
     socket.emit('receiveTiles', tilesObject);
     io.in(id).emit('tilesRemaining', getTilesRemaining(id));
-    io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} Dumped..`);
+    io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} dumped..`);
   };
 
   const handleRottenBanana = ({ id, rottenTiles }: GameEnd) => {
@@ -234,7 +233,7 @@ io.on('connection', (socket: Socket) => {
   };
 
   const handleEndGame = (gameRoomCode: string) => {
-    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} Won!`);
+    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} won!`);
     io.in(gameRoomCode).emit('endGameResponse', getCurrentPlayerUserName(gameRoomCode, socket.id));
   }
 
@@ -254,13 +253,13 @@ io.on('connection', (socket: Socket) => {
     if (index >= 0) {
       handleNewHost(gameRoomCode);
       playersInRoom.splice(index, 1);
-      playerTiles.map((tile: TileDocument) => currentTiles.push(tile));
+      if (playerTiles > 0) playerTiles.map((tile: TileDocument) => currentTiles.push(tile));
       io.in(gameRoomCode).emit('playersInRoom', playersInRoom)
     }
 
     checkRoomToDelete(gameRoomCode);
     io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
-    io.in(gameRoomCode).emit('actionMessage', `${userName} Left`)
+    io.in(gameRoomCode).emit('actionMessage', `${userName} left`)
   };
 
   const getTiles = (gameRoomCode: string, numberOfTiles: number) => {
@@ -304,12 +303,12 @@ const PORT = process.env.PORT || 4200;
     await dbConnection;
     console.log('Mongoose Connected');
 
-    app.listen(PORT, () => {
-      console.log(`Express Server lives at ${PORT}`);
-    });
+    // app.listen(PORT, () => {
+    //   console.log(`Express Server lives at ${PORT}`);
+    // });
 
-    socketServer.listen(4300, () => {
-      console.log(`Socket Server lives at 4300`);
+    socketServer.listen(PORT, () => {
+      console.log(`Socket Server lives at 4200`);
     })
   } catch (err) {
     console.log('Error:', err)
