@@ -254,7 +254,7 @@ io.on('connection', (socket: Socket) => {
     if (index >= 0) {
       handleNewHost(gameRoomCode);
       playersInRoom.splice(index, 1);
-      if (playerTiles > 0) playerTiles.map((tile: TileDocument) => currentTiles.push(tile));
+      if (playerTiles) playerTiles.map((tile: TileDocument) => currentTiles.push(tile));
       io.in(gameRoomCode).emit('playersInRoom', playersInRoom)
     }
 
