@@ -227,10 +227,11 @@ io.on('connection', (socket: Socket) => {
 
   const handleRottenBanana = (gameRoomCode: string) => {
     const userName = getCurrentPlayerUserName(gameRoomCode, socket.id);
+    io.in(gameRoomCode).emit('rottenUserName', getCurrentPlayerUserName(gameRoomCode, socket.id));
     handleLeaveGame(gameRoomCode);
     io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
     io.in(gameRoomCode).emit('actionMessage', `${userName} is a rotten banana!`);
-    io.in(gameRoomCode).emit('rottenBananaResponse', getCurrentPlayerUserName(gameRoomCode, socket.id));
+    socket.emit('rottenBananaResponse');
   };
 
   const handleEndGame = ({ id, playerWordObject }: any) => {
