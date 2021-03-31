@@ -22,7 +22,7 @@ export const getPlayersInRoom = (gameRoomCode: string) => {
 
 export const getCurrentPlayer = (gameRoomCode: string, clientID: string) => {
   const currentRoom = getCurrentRoom(gameRoomCode);
-  return currentRoom.clients[clientID];
+  return currentRoom?.clients[clientID];
 };
 
 export const getCurrentPlayerUserName = (gameRoomCode: string, clientID: string) => {
@@ -42,7 +42,7 @@ export const getCurrentReady = (gameRoomCode: string) => {
 
 export const getClients = (gameRoomCode: string) => {
   const currentRoom = getCurrentRoom(gameRoomCode);
-  return currentRoom.clients;
+  return currentRoom?.clients;
 };
 
 export const getCurrentTiles = (gameRoomCode: string) => {
