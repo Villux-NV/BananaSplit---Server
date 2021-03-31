@@ -3,7 +3,8 @@ import {
   getUsers,
   getUserById,
   createUser,
-  updateUser,
+  updateUserWord,
+  updateUserScore
 } from '../models/crud';
 
 // Using to test endpoints/data.
@@ -40,13 +41,24 @@ export const createUsersCtrl = async (req: Request, res: Response) => {
   }
 };
 
-// TODO: Refactor later to separate into two functions for each update
-// TODO: Update Score/Longest Word -- 'score' || 'word'
-export const updateUserCtrl = async (req: Request, res: Response) => {
-  const { field, userId } = req.params;
-  const { word } = req.body;  
+export const updateUserWordCtrl = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { word } = req.body;
+
   try {
-    const userUpdate = await updateUser(field, userId, word);
+    const userUpdate = await updateUserWord(userId, word);
+    if (!userUpdate) return res.status(400).send('No Update');
+    res.status(200).json(userUpdate);
+  } catch (err) {
+    res.status(500).json({ error: 'Error in Update Score Ctrl', status: 500 });
+  }
+};
+
+export const updateUserScoreCtrl = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  try {
+    const userUpdate = await updateUserScore(userId);
     if (!userUpdate) return res.status(400).send('No Update');
     res.status(200).json(userUpdate);
   } catch (err) {

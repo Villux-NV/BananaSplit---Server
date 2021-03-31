@@ -9,8 +9,28 @@ export interface UserDocument extends Document {
   guest?: boolean,
 }
 
-export interface RoomInformation {
+export interface RoomInformation extends Document {
   gameRoomCode: string,
-  id: string,
   userName: string,
+}
+
+export interface TileDocument extends Document {
+  id: number;
+  letter: string;
+}
+
+export interface GameEnd extends Document {
+  id: string,
+  tileToDump?: TileDocument,
+  rottenTiles?: TileDocument[]
+}
+
+export interface ClientInfo extends Document {
+  SocketID: SocketInfo
+}
+
+export interface SocketInfo extends Document {
+  userName: string,
+  host: boolean,
+  clientID: string
 }
