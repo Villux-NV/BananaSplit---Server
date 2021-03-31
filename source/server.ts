@@ -169,7 +169,7 @@ io.on('connection', (socket: Socket) => {
     };
 
     Object.values(clients).map(({ clientID }: any) => {
-      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
+      tilesObject[clientID] = getTiles(gameRoomCode, 5);
     });
 
     Object.keys(clients).map((client) => {
