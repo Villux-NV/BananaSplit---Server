@@ -190,7 +190,7 @@ io.on('connection', (socket: Socket) => {
 
     Object.values(clients).map(({ clientID }: any) => {
       tilesObject[clientID] = getTiles(gameRoomCode, 1);
-    })
+    });
 
     Object.keys(clients).map((client) => {
       if (tilesObject[client][0]) {
@@ -234,16 +234,29 @@ io.on('connection', (socket: Socket) => {
     socket.emit('rottenBananaResponse');
   };
 
-  const handleEndGame = (gameRoomCode: string) => {
-    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} won!`);
-    io.in(gameRoomCode).emit('endGameResponse', getCurrentPlayerUserName(gameRoomCode, socket.id));
-    socket.in(gameRoomCode).emit('roomWordCheck');
+  const handleEndGame = ({ id, longestWord, amountOfWords }: any) => {
+    io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} won!`);
+    io.in(id).emit('endGameResponse', getCurrentPlayerUserName(id, socket.id));
+    
+    const currentPlayer = getCurrentPlayer(id, socket.id);
+
+    currentPlayer.longest = longestWord;
+    currentPlayer.wordCount = amountOfWords;
+
+    socket.in(id).emit('roomWordCheck');
   }
 
-  const handleWordResponse = (gameRoomCode: string) => {
+  const handleWordResponse = ({ id, longestWord, amountOfWords }: any) => {
     console.log('ending stats are happening');
+    const currentPlayer = getCurrentPlayer(id, socket.id);
 
-    io.in(gameRoomCode).emit('statCheck');
+    currentPlayer.longest = longestWord;
+    currentPlayer.wordCount = amountOfWords;
+
+    const endLongestWord = getEndLongestWord(id);
+    const endMostWords = getEndMostWords(id);
+
+    io.in(id).emit('statCheck', { endLongestWord, endMostWords });
   }
 
   const handleLeaveGame = (gameRoomCode: string) => {
@@ -286,6 +299,34 @@ io.on('connection', (socket: Socket) => {
       delete socketRoomInformation[gameRoomCode];
       console.log(gameRoomCode, 'deleted');
     }
+  };
+
+  const getEndLongestWord = (gameRoomCode: string) => {
+    const clients: any = getClients(gameRoomCode);
+
+    const getEndLongestWord = Object.values(clients).reduce((max: string, { longest = '' }: any, index) => {
+      return max.length > longest.length ? max : longest;
+    }, '');
+
+    const getEndUserName = Object.values(clients).map(({ userName, longest }: any) => {
+      if (longest === getEndLongestWord) return userName;
+    });
+
+    return { getEndLongestWord, getEndUserName };
+  };
+
+  const getEndMostWords = (gameRoomCode: string) => {
+    const clients: any = getClients(gameRoomCode);
+
+    const getEndMostWords = Object.values(clients).reduce((max: string, { wordCount = '' }: any, index) => {
+      return max > wordCount ? max : wordCount;
+    }, '');
+
+    const getEndMostUserName = Object.values(clients).map(({ userName, wordCount }: any) => {
+      if (wordCount === getEndMostWords) return userName;
+    });
+
+    return { getEndMostWords, getEndMostUserName };
   };
 
   // TODO: TS Enums -- can convert on refactor

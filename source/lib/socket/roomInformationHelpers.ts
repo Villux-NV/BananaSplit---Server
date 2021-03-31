@@ -8,6 +8,8 @@ export const socketRoomInformation: any = {};
 // NOTE:          username, 
 // NOTE:          isHost, 
 // NOTE:          socket: socket.id, 
+// NOTE:          longest: 'word', 
+// NOTE:          wordCount: 2, 
 // NOTE:        } 
 // NOTE: }
 
