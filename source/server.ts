@@ -106,7 +106,6 @@ io.on('connection', (socket: Socket) => {
     socket.join(gameRoomCode);
     io.in(gameRoomCode).emit('playersInRoom', [userName]);
     io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} is host`);
-    console.log('Create Game', socketRoomInformation);
   };
 
   const handleJoinGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
@@ -170,7 +169,7 @@ io.on('connection', (socket: Socket) => {
     };
 
     Object.values(clients).map(({ clientID }: any) => {
-      tilesObject[clientID] = getTiles(gameRoomCode, 5);
+      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
     });
 
     Object.keys(clients).map((client) => {
@@ -247,7 +246,6 @@ io.on('connection', (socket: Socket) => {
   }
 
   const handleWordResponse = ({ id, longestWord, amountOfWords }: any) => {
-    console.log('ending stats are happening');
     const currentPlayer = getCurrentPlayer(id, socket.id);
 
     currentPlayer.longest = longestWord;
@@ -297,7 +295,6 @@ io.on('connection', (socket: Socket) => {
     const currentPlayers = getCurrentPlayers(gameRoomCode);
     if (currentPlayers?.length === 0) {
       delete socketRoomInformation[gameRoomCode];
-      console.log(gameRoomCode, 'deleted');
     }
   };
 
@@ -354,10 +351,6 @@ const PORT = process.env.PORT || 4200;
   try {
     await dbConnection;
     console.log('Mongoose Connected');
-
-    // app.listen(PORT, () => {
-    //   console.log(`Express Server lives at ${PORT}`);
-    // });
 
     socketServer.listen(PORT, () => {
       console.log(`Socket Server lives at 4200`);
