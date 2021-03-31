@@ -141,7 +141,6 @@ io.on('connection', (socket: Socket) => {
       io.in(gameRoomCode).emit('playersInRoom', currentPlayers);
       io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} Joined`);
       socketResponse('Joining');
-      console.log('Join Game', socketRoomInformation);
     }
   };
   
@@ -200,11 +199,6 @@ io.on('connection', (socket: Socket) => {
       }
     });
 
-    const currentTiles = getCurrentTiles(gameRoomCode);
-    const currentPlayer = getCurrentPlayer(gameRoomCode, socket.id);
-    console.log(currentTiles, 'room tiles in peel');
-    console.log(currentPlayer.playerTiles, 'player tiles in peel');
-
     io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
     io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} Peeled! +1`);
@@ -218,7 +212,6 @@ io.on('connection', (socket: Socket) => {
     const tilesObject: any = {};
 
     currentTiles.push(tileToDump);
-    console.log(tileToDump, 'tile to dump');
 
     const dumpTiles = getTiles(id, 3)
     tilesObject[socket.id] = dumpTiles;
@@ -232,8 +225,6 @@ io.on('connection', (socket: Socket) => {
     socket.emit('receiveTiles', tilesObject);
     io.in(id).emit('tilesRemaining', getTilesRemaining(id));
     io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} Dumped..`);
-    console.log(currentPlayer.playerTiles, 'player tiles after dump');
-    console.log(currentTiles, 'bunch tiles after dump');
   };
 
   const handleRottenBanana = ({ id, rottenTiles }: GameEnd) => {
@@ -245,7 +236,7 @@ io.on('connection', (socket: Socket) => {
 
   const handleEndGame = (gameRoomCode: string) => {
     io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} Won!`);
-    io.in(gameRoomCode).emit('endGameResponse');
+    io.in(gameRoomCode).emit('endGameResponse', getCurrentPlayerUserName(gameRoomCode, socket.id));
   }
 
   const handleLeaveGame = (gameRoomCode: string) => {
