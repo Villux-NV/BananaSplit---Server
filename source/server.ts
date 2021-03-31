@@ -233,17 +233,16 @@ io.on('connection', (socket: Socket) => {
     io.in(gameRoomCode).emit('rottenBananaResponse', getCurrentPlayerUserName(gameRoomCode, socket.id));
   };
 
-  const handleEndGame = ({ id, playerWordObject }: any) => {
-    console.log('winner words', playerWordObject);
-    io.in(id).emit('actionMessage', `${getCurrentPlayerUserName(id, socket.id)} won!`);
-    io.in(id).emit('endGameResponse', getCurrentPlayerUserName(id, socket.id));
-    socket.in(id).emit('roomWordCheck', playerWordObject);
+  const handleEndGame = (gameRoomCode: string) => {
+    io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} won!`);
+    io.in(gameRoomCode).emit('endGameResponse', getCurrentPlayerUserName(gameRoomCode, socket.id));
+    socket.in(gameRoomCode).emit('roomWordCheck');
   }
 
-  const handleWordResponse = (objects: any) => {
-    console.log('incoming objects', objects);
+  const handleWordResponse = (gameRoomCode: string) => {
+    console.log('ending stats are happening');
 
-    // TODO: Find username/count for longest word/most words/least words
+    io.in(gameRoomCode).emit('statCheck');
   }
 
   const handleLeaveGame = (gameRoomCode: string) => {
