@@ -227,6 +227,7 @@ io.on('connection', (socket: Socket) => {
 
   const handleRottenBanana = ({ id, rottenTiles }: GameEnd) => {
     const userName = getCurrentPlayerUserName(id, socket.id);
+    console.log(id, 'firing in rotten banana');
     handleLeaveGame(id);
     io.in(id).emit('tilesRemaining', getTilesRemaining(id));
     io.in(id).emit('actionMessage', `${userName} is a Rotten Banana!`);
