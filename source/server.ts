@@ -28,7 +28,7 @@ const socketServer = new http.Server(app);
 
 const io = new Server(socketServer, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: '*',
     credentials: true
   }
 });
@@ -169,7 +169,7 @@ io.on('connection', (socket: Socket) => {
     };
 
     Object.values(clients).map(({ clientID }: any) => {
-      tilesObject[clientID] = getTiles(gameRoomCode, 5);
+      tilesObject[clientID] = getTiles(gameRoomCode, numberOfTiles);
     });
 
     Object.keys(clients).map((client) => {
