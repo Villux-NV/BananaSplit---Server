@@ -28,7 +28,7 @@ const socketServer = new http.Server(app);
 
 const io = new Server(socketServer, {
   cors: {
-    origin: 'https://banana-split-client-qnqizrie2-krista-p.vercel.app',
+    origin: 'https://banana-split-client-286au9nb5-krista-p.vercel.app',
     credentials: true
   }
 });
