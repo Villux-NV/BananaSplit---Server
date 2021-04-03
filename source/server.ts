@@ -85,7 +85,6 @@ io.on('connection', (socket: Socket) => {
   const handlePrivateGame = ({ gameRoomCode, userName }: RoomInformation, socketResponse: Function) => {
     ROOM_ID = gameRoomCode;
     ROOM_USER = userName;
-    // TODO: Rejoin if possible, or start new game
     socketResponse(true);
     
     const bunch = shuffleBunch(buildBunch(tileSet));
@@ -182,7 +181,7 @@ io.on('connection', (socket: Socket) => {
     io.in(gameRoomCode).emit('actionMessage', 'split!!!');
   };
 
-  // TODO: Send priority to person to sent event
+  // TODO: Send priority tile to person that sent event
   const handlePeelAction = (gameRoomCode: string) => {
     const clients: any = getClients(gameRoomCode);
     const tilesObject: any = {};
@@ -201,7 +200,6 @@ io.on('connection', (socket: Socket) => {
     io.in(gameRoomCode).emit('receiveTiles', tilesObject);
     io.in(gameRoomCode).emit('actionMessage', `${getCurrentPlayerUserName(gameRoomCode, socket.id)} peeled! +1`);
   };
-
 
   const handleDumpAction = ({ id, tileToDump }: GameEnd) => {
     const currentTiles = getCurrentTiles(id);
@@ -243,11 +241,10 @@ io.on('connection', (socket: Socket) => {
     currentPlayer.wordCount = amountOfWords;
 
     socket.in(id).emit('roomWordCheck');
-  }
+  };
 
   const handleWordResponse = ({ id, longestWord, amountOfWords }: any) => {
     const currentPlayer = getCurrentPlayer(id, socket.id);
-
     currentPlayer.longest = longestWord;
     currentPlayer.wordCount = amountOfWords;
 
@@ -255,7 +252,7 @@ io.on('connection', (socket: Socket) => {
     const endMostWords = getEndMostWords(id);
 
     io.in(id).emit('statCheck', { endLongestWord, endMostWords });
-  }
+  };
 
   const handleLeaveGame = (gameRoomCode: string) => {
     socket.leave(gameRoomCode);
@@ -275,7 +272,7 @@ io.on('connection', (socket: Socket) => {
       playersInRoom.splice(index, 1);
       if (playerTiles) playerTiles.map((tile: TileDocument) => currentTiles.push(tile));
       io.in(gameRoomCode).emit('playersInRoom', playersInRoom)
-    }
+    };
 
     checkRoomToDelete(gameRoomCode);
     io.in(gameRoomCode).emit('tilesRemaining', getTilesRemaining(gameRoomCode));
@@ -288,14 +285,14 @@ io.on('connection', (socket: Socket) => {
       return currentTiles.splice(0, numberOfTiles);
     } else {
       return currentTiles.splice(0, currentTiles.length);
-    }
+    };
   };
 
   const checkRoomToDelete = (gameRoomCode: string) => {
     const currentPlayers = getCurrentPlayers(gameRoomCode);
     if (currentPlayers?.length === 0) {
       delete socketRoomInformation[gameRoomCode];
-    }
+    };
   };
 
   const getEndLongestWord = (gameRoomCode: string) => {
@@ -338,7 +335,6 @@ io.on('connection', (socket: Socket) => {
   socket.on('rottenBanana', handleRottenBanana);
   socket.on('endGame', handleEndGame);
   socket.on('leaveGame', handleLeaveGame);
-
   socket.on('roomWordCheckResponse', handleWordResponse);
 });
 
@@ -354,7 +350,7 @@ const PORT = process.env.PORT || 4200;
 
     socketServer.listen(PORT, () => {
       console.log(`Socket Server lives at 4200`);
-    })
+    });
   } catch (err) {
     console.log('Error:', err)
   }

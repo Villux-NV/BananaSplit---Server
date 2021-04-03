@@ -1,17 +1,4 @@
 export const socketRoomInformation: any = {};
-// NOTE: { gameRoomCode:
-// NOTE:     players: [...players],
-// NOTE:     playersReady: [...players],
-// NOTE:     active: true | false,
-// NOTE:     clients: {
-// NOTE:        socket.id: {
-// NOTE:          username, 
-// NOTE:          isHost, 
-// NOTE:          socket: socket.id, 
-// NOTE:          longest: 'word', 
-// NOTE:          wordCount: 2, 
-// NOTE:        } 
-// NOTE: }
 
 export const getCurrentRoom = (gameRoomCode: string) => {
   return socketRoomInformation[gameRoomCode];

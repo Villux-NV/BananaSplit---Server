@@ -7,7 +7,6 @@ import {
   updateUserScore
 } from '../models/crud';
 
-// Using to test endpoints/data.
 export const getUsersCtrl = async (req: Request, res: Response) => {
   try {
     const users = await getUsers();

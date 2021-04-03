@@ -17,6 +17,4 @@ router.post('/user/create', createUsersCtrl);
 router.post('/user/word/:userId', updateUserWordCtrl);
 router.post('/user/score/:userId', updateUserScoreCtrl);
 
-// TODO: Time permitting - Delete User, Update Username | Email
-
 export default router;
