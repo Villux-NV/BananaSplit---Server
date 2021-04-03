@@ -51,10 +51,10 @@ Client
 - [TailwindCSS](https://tailwindcss.com/) - Utility-first CSS framework that can be composed to build any design, directly in the markup.
 ## Author
 
-Krista Polikaitis - [Github](https://github.com/krista-p) - [LinkedIn](https://www.linkedin.com/in/krista-polikaitis/)
-Derek Pizzolatto - [Github](https://github.com/chuck517) - [LinkedIn]()
-Nick Villarreal - [Github](https://github.com/Villux-NV) - [LinkedIn](https://www.linkedin.com/in/nick-villarreal/)
-Ben Krapivsky - [Github](https://github.com/Benkr)
+* Krista Polikaitis - [Github](https://github.com/krista-p) - [LinkedIn](https://www.linkedin.com/in/krista-polikaitis/)
+* Derek Pizzolatto - [Github](https://github.com/chuck517) - [LinkedIn]()
+* Nick Villarreal - [Github](https://github.com/Villux-NV) - [LinkedIn](https://www.linkedin.com/in/nick-villarreal/)
+* Ben Krapivsky - [Github](https://github.com/Benkr)
 
 ## License
 
