@@ -6,7 +6,7 @@
 
 Banana/Split is a fast paced game where you can battle with others creating words in a crossword fashion with a shared bunch of tiles. Each player has their own board and has to keep their spelling in check! A winner ends the game when all tiles are used from the bunch and players tile.
 
-[Play test](https://vercel.com/krista-p/banana-split-client/JAxTzVQbvFg5y6WWmRz5aeZSn6xu) now and give any feedback!
+[Play test](https://banana-split-client-n8zqla8b5-krista-p.vercel.app/) now and give any feedback!
 
 ## Screenshots
 
